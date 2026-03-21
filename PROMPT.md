@@ -33,7 +33,7 @@ This project is a terminal app.
 - Surface per-family status, detail text, latency history, uptime percentages, target information, and last checked time in a continuously updating terminal layout.
 - Show when a family is actively being polled without hiding its last completed result.
 - Arrange the dashboard as three side-by-side signal columns, with IPv4 and IPv6 shown next to each other inside each signal, so the full comparison fits on one screen.
-- Add a compact summary row above the detailed columns and keep probe targets in a low-emphasis footer so the main comparison area stays focused on health signals.
+- Add a compact summary row above the detailed columns that emphasizes uptime percentages instead of repeating online/offline labels, and keep probe targets in a low-emphasis footer so the main comparison area stays focused on health signals.
 
 ### Connectivity Runtime
 

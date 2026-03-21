@@ -1,7 +1,8 @@
 import { Box, Text } from "ink";
-import { Match, pipe } from "effect";
+import { pipe } from "effect";
 
 import type { AppState } from "../domain/AppState";
+import { formatUptimePercentage } from "./formatUptimePercentage";
 
 export const SummaryRow = ({
   label,
@@ -13,22 +14,22 @@ export const SummaryRow = ({
   <Box>
     <Text bold>{label}</Text>
     <Text color="gray"> </Text>
-    <Text color="gray">v4 </Text>
-    {pipe(
-      Match.value(state.ipv4.status),
-      Match.when("unknown", () => <Text color="yellow">?</Text>),
-      Match.when("online", () => <Text color="green">up</Text>),
-      Match.when("offline", () => <Text color="red">down</Text>),
-      Match.exhaustive,
-    )}
-    <Text color="gray"> </Text>
-    <Text color="gray">v6 </Text>
-    {pipe(
-      Match.value(state.ipv6.status),
-      Match.when("unknown", () => <Text color="yellow">?</Text>),
-      Match.when("online", () => <Text color="green">up</Text>),
-      Match.when("offline", () => <Text color="red">down</Text>),
-      Match.exhaustive,
-    )}
+    <Text color="gray">
+      {pipe(
+        [
+          `v4 ${formatUptimePercentage({
+            label: "",
+            successfulChecks: state.ipv4.successfulChecks,
+            totalChecks: state.ipv4.totalChecks,
+          }).replace(": ", "")}`,
+          `v6 ${formatUptimePercentage({
+            label: "",
+            successfulChecks: state.ipv6.successfulChecks,
+            totalChecks: state.ipv6.totalChecks,
+          }).replace(": ", "")}`,
+        ],
+        (parts) => parts.join("  "),
+      )}
+    </Text>
   </Box>
 );

@@ -90,6 +90,8 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("Direct");
     expect(app.lastFrame()).toContain("v4");
     expect(app.lastFrame()).toContain("v6");
+    expect(app.lastFrame()).toContain("v4 100.0%");
+    expect(app.lastFrame()).toContain("v6 0.0%");
     expect(app.lastFrame()).toContain("IPv4");
     expect(app.lastFrame()).toContain("IPv6");
     expect(app.lastFrame()).toContain("Up: 100.0%");
