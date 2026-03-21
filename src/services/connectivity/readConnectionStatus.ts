@@ -22,7 +22,8 @@ export const readConnectionStatus = ({
           "--show-error",
           "--max-time",
           "3",
-          "https://api.ipify.org",
+          "--insecure",
+          "https://1.1.1.1/cdn-cgi/trace",
         ],
       }),
     ),
@@ -35,7 +36,8 @@ export const readConnectionStatus = ({
           "--show-error",
           "--max-time",
           "3",
-          "https://api64.ipify.org",
+          "--insecure",
+          "https://[2606:4700:4700::1111]/cdn-cgi/trace",
         ],
       }),
     ),
@@ -48,7 +50,7 @@ export const readConnectionStatus = ({
             detail: pipe(stdout.trim(), (output) =>
               pipe(
                 Match.value(output.length > 0),
-                Match.when(true, () => `Address ${output}`),
+                Match.when(true, () => "Reachable"),
                 Match.orElse(() => "Reachable"),
               ),
             ),

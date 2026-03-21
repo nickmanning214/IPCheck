@@ -28,7 +28,7 @@ describe("readConnectivitySnapshot", () => {
     ).toEqual({
       ipv4: {
         status: "online",
-        detail: "Address 203.0.113.10",
+        detail: "Reachable",
       },
       ipv6: {
         status: "offline",

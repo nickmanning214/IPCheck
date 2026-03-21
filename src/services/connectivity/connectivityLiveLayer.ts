@@ -1,9 +1,9 @@
-import { Layer } from "effect";
+import { Layer, pipe } from "effect";
 
 import { ProcessService } from "../process/ProcessService";
 import { ConnectivityService } from "./ConnectivityService";
 
-export const connectivityLiveLayer = Layer.provide(
+export const connectivityLiveLayer = pipe(
   ConnectivityService.Live,
-  ProcessService.Live,
+  Layer.provide(ProcessService.Live),
 );

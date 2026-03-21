@@ -17,6 +17,7 @@ This project is a terminal app.
 2. The terminal UI always shows the latest known status for IPv4 and IPv6, including whether each check is currently running, reachable, or failing.
 3. The app refreshes connectivity checks on a repeating interval without exiting on its own.
 4. The UI shows the last completed check time and keeps the terminal view readable during long-running monitoring.
+5. The connectivity checks should probe IPv4 and IPv6 directly so the app can still report transport failures even when DNS is unavailable.
 
 ## Vertical Features
 
@@ -29,6 +30,7 @@ This project is a terminal app.
 
 - Perform IPv4 and IPv6 connectivity checks through effectified external process services.
 - Convert raw process results into app-friendly connectivity states.
+- Probe literal IPv4 and IPv6 endpoints instead of relying on hostname resolution.
 
 ### Process Service
 

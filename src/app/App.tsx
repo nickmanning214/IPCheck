@@ -25,7 +25,7 @@ export const App = ({
           runMonitorLoop({ dispatch, intervalMs }),
           Effect.provide(connectivityLayer),
         ),
-        [dispatch, intervalMs, connectivityLayer],
+        [intervalMs, connectivityLayer],
       ),
       (
         <Box flexDirection="column" padding={1}>
