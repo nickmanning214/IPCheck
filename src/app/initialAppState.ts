@@ -14,6 +14,8 @@ export const makeInitialAppState = ({
       lastCheckedAt: null,
       successfulChecks: 0,
       totalChecks: 0,
+      latencyHistoryMs: [],
+      recentChecks: [],
     },
     ipv6: {
       status: "unknown",
@@ -22,6 +24,8 @@ export const makeInitialAppState = ({
       lastCheckedAt: null,
       successfulChecks: 0,
       totalChecks: 0,
+      latencyHistoryMs: [],
+      recentChecks: [],
     },
   }) satisfies AppState;
 

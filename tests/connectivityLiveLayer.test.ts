@@ -18,7 +18,7 @@ describe("connectivityLiveLayer", () => {
               Layer.succeed(ProcessService, {
                 run: ({ args }) =>
                   Effect.succeed(
-                    args.includes("-4")
+                    args.includes("1.1.1.1")
                       ? {
                           exitCode: 0,
                           stdout: "ok",
@@ -38,6 +38,7 @@ describe("connectivityLiveLayer", () => {
     ).toEqual({
       status: "offline",
       detail: "IPv6 unreachable",
+      latencyMs: null,
     });
   });
 });

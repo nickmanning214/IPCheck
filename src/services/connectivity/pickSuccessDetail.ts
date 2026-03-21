@@ -1,9 +1,11 @@
 import { Match, pipe } from "effect";
 
+import { readLatencyMs } from "./readLatencyMs";
+
 export const pickSuccessDetail = ({ stdout }: { readonly stdout: string }) =>
   pipe(
-    stdout.match(/time=([0-9.]+)\s*ms/),
+    readLatencyMs({ stdout }),
     Match.value,
     Match.when(null, () => "Reachable"),
-    Match.orElse((match) => `Reply in ${match[1]} ms`),
+    Match.orElse((latencyMs) => `Reply in ${latencyMs} ms`),
   );

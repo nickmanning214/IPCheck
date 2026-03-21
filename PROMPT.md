@@ -19,13 +19,15 @@ This project is a terminal app.
 4. The UI shows the last completed check time for each family, uptime percentage since the app started, and keeps the terminal view readable during long-running monitoring.
 5. The connectivity checks should probe IPv4 and IPv6 directly so the app can still report transport failures even when DNS is unavailable.
 6. The monitor should keep the last online or offline status visible while a new probe is in flight instead of replacing everything with a blocking global checking state.
+7. The app should support configurable IPv4 and IPv6 probe targets without requiring code changes.
+8. The UI should show recent latency history and rolling 1-minute and 5-minute uptime windows for each family.
 
 ## Vertical Features
 
 ### UI
 
 - Render a persistent Ink dashboard for IPv4 and IPv6 connectivity.
-- Surface per-family status, detail text, uptime percentage, and last checked time in a continuously updating terminal layout.
+- Surface per-family status, detail text, latency history, uptime percentages, target information, and last checked time in a continuously updating terminal layout.
 - Show when a family is actively being polled without hiding its last completed result.
 
 ### Connectivity Runtime
@@ -34,6 +36,7 @@ This project is a terminal app.
 - Convert raw process results into app-friendly connectivity states.
 - Probe literal IPv4 and IPv6 endpoints instead of relying on hostname resolution.
 - Poll IPv4 and IPv6 independently so one slow family does not block updates for the other.
+- Allow probe targets to be configured from the runtime environment.
 
 ### Process Service
 
@@ -45,3 +48,4 @@ This project is a terminal app.
 
 - Support ongoing IPv4 and IPv6 health visibility from the terminal UI through the process service and the monitoring loop.
 - Track per-family uptime percentage from app start based on completed probes.
+- Track per-family rolling uptime windows and recent latency history from completed probes.

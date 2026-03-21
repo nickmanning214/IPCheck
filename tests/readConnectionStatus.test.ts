@@ -9,7 +9,7 @@ describe("readConnectionStatus", () => {
     expect(
       await Effect.runPromise(
         Effect.provideService(
-          readConnectionStatus({ family: "ipv4" }),
+          readConnectionStatus({ family: "ipv4", target: "1.1.1.1" }),
           ProcessService,
           {
             run: ({ command, args }) =>
@@ -36,6 +36,7 @@ describe("readConnectionStatus", () => {
     ).toEqual({
       status: "online",
       detail: "Reply in 12.3 ms",
+      latencyMs: 12.3,
     });
   });
 
@@ -43,7 +44,10 @@ describe("readConnectionStatus", () => {
     expect(
       await Effect.runPromise(
         Effect.provideService(
-          readConnectionStatus({ family: "ipv6" }),
+          readConnectionStatus({
+            family: "ipv6",
+            target: "2001:4860:4860::8888",
+          }),
           ProcessService,
           {
             run: ({ command, args }) =>
@@ -69,6 +73,7 @@ describe("readConnectionStatus", () => {
     ).toEqual({
       status: "offline",
       detail: "sendto: No route to host",
+      latencyMs: null,
     });
   });
 });
