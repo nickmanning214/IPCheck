@@ -21,7 +21,7 @@ This project is a terminal app.
 6. The monitor should keep the last online or offline status visible while a new probe is in flight instead of replacing everything with a blocking global checking state.
 7. The app should support configurable IPv4 and IPv6 probe targets without requiring code changes.
 8. The UI should show recent latency history and rolling 1-minute and 5-minute uptime windows for each family.
-9. The app should support both raw reachability checks and HTTP-style checks so browser-like slowness can be compared against basic network health.
+9. The app should support both raw reachability checks and hostname-based HTTP-style checks so browser-like slowness can be compared against basic network health.
 10. HTTP probes should use bounded timeouts so a wedged web request cannot leave the monitor stuck in a polling state indefinitely.
 
 ## Vertical Features
@@ -39,7 +39,7 @@ This project is a terminal app.
 - Probe literal IPv4 and IPv6 endpoints instead of relying on hostname resolution.
 - Poll IPv4 and IPv6 independently so one slow family does not block updates for the other.
 - Allow probe targets to be configured from the runtime environment.
-- Support both ICMP-style reachability checks and HTTP-style checks for each family.
+- Support both ICMP-style reachability checks and hostname-based HTTP-style checks for each family.
 - Bound HTTP probe duration with explicit timeouts so the UI keeps advancing even during severe slowness.
 
 ### Process Service
@@ -53,4 +53,4 @@ This project is a terminal app.
 - Support ongoing IPv4 and IPv6 health visibility from the terminal UI through the process service and the monitoring loop.
 - Track per-family uptime percentage from app start based on completed probes.
 - Track per-family rolling uptime windows and recent latency history from completed probes.
-- Let users compare raw network health against browser-like HTTP health in the same run.
+- Let users compare raw network health against browser-like hostname-based HTTP health in the same run.

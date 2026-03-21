@@ -89,7 +89,7 @@ describe("readConnectionStatus", () => {
           readConnectionStatus({
             family: "ipv4",
             signal: "http",
-            target: "https://1.1.1.1/cdn-cgi/trace",
+            target: "https://api.ipify.org",
           }),
           ProcessService,
           {
@@ -98,10 +98,10 @@ describe("readConnectionStatus", () => {
                 command === "curl" &&
                   args.includes("-4") &&
                   args.includes("--write-out") &&
-                  args.includes("https://1.1.1.1/cdn-cgi/trace")
+                  args.includes("https://api.ipify.org")
                   ? {
                       exitCode: 0,
-                      stdout: "200 0.120",
+                      stdout: "203.0.113.10\n200 0.120",
                       stderr: "",
                     }
                   : {
@@ -115,7 +115,7 @@ describe("readConnectionStatus", () => {
       ),
     ).toEqual({
       status: "online",
-      detail: "HTTP 200 in 120.0 ms",
+      detail: "Address 203.0.113.10",
       latencyMs: 120,
     });
   });

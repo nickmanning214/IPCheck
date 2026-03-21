@@ -17,8 +17,8 @@ describe("App", () => {
             ipv6: "2001:4860:4860::8844",
           },
           http: {
-            ipv4: "https://1.1.1.1/cdn-cgi/trace",
-            ipv6: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
+            ipv4: "https://api.ipify.org",
+            ipv6: "https://api64.ipify.org",
           },
         }}
         connectivityLayer={Layer.succeed(ConnectivityService, {
@@ -28,8 +28,8 @@ describe("App", () => {
               ipv6: "2001:4860:4860::8844",
             },
             http: {
-              ipv4: "https://1.1.1.1/cdn-cgi/trace",
-              ipv6: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
+              ipv4: "https://api.ipify.org",
+              ipv6: "https://api64.ipify.org",
             },
           },
           readConnectionStatus: ({ family, signal }) =>
@@ -49,7 +49,7 @@ describe("App", () => {
                   : family === "ipv4"
                     ? {
                         status: "online",
-                        detail: "HTTP 200 in 120.0 ms",
+                        detail: "Address 203.0.113.10",
                         latencyMs: 120,
                       }
                     : {
@@ -75,12 +75,9 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("Last checked at");
     expect(app.lastFrame()).toContain("Ping IPv4 target: 8.8.8.8");
     expect(app.lastFrame()).toContain("Ping IPv6 target: 2001:4860:4860::8844");
-    expect(app.lastFrame()).toContain(
-      "HTTP IPv4 target: https://1.1.1.1/cdn-cgi/trace",
-    );
-    expect(app.lastFrame()).toContain(
-      "HTTP IPv6 target: https://[2606:4700:4700::1111]/cdn-cgi/trace",
-    );
+    expect(app.lastFrame()).toContain("HTTP IPv4 target: https://api.ipify.org");
+    expect(app.lastFrame()).toContain("HTTP IPv6 target: https://api64.ipify.org");
+    expect(app.lastFrame()).toContain("Address 203.0.113.10");
 
     app.unmount();
   });

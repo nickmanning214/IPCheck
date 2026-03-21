@@ -10,8 +10,8 @@ describe("readProbeTargets", () => {
         ipv6: "2001:4860:4860::8888",
       },
       http: {
-        ipv4: "https://1.1.1.1/cdn-cgi/trace",
-        ipv6: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
+        ipv4: "https://api.ipify.org",
+        ipv6: "https://api64.ipify.org",
       },
     });
   });
