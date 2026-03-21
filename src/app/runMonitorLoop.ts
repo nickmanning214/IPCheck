@@ -15,13 +15,19 @@ export const runMonitorLoop = ({
   pipe(
     Effect.all(
       [
+        { signal: "ping" as const, family: "ipv4" as const },
+        { signal: "ping" as const, family: "ipv6" as const },
+        { signal: "http" as const, family: "ipv4" as const },
+        { signal: "http" as const, family: "ipv6" as const },
+      ].map(({ family, signal }) =>
         pipe(
-          dispatch({ _tag: "CheckStarted", family: "ipv4" }),
-          Effect.zipRight(readConnectionStatus({ family: "ipv4" })),
+          dispatch({ _tag: "CheckStarted", signal, family }),
+          Effect.zipRight(readConnectionStatus({ signal, family })),
           Effect.flatMap((result) =>
             dispatch({
               _tag: "CheckCompleted",
-              family: "ipv4",
+              signal,
+              family,
               checkedAt: Date.now(),
               result,
             }),
@@ -29,21 +35,7 @@ export const runMonitorLoop = ({
           Effect.zipRight(Effect.sleep(Duration.millis(intervalMs))),
           Effect.forever,
         ),
-        pipe(
-          dispatch({ _tag: "CheckStarted", family: "ipv6" }),
-          Effect.zipRight(readConnectionStatus({ family: "ipv6" })),
-          Effect.flatMap((result) =>
-            dispatch({
-              _tag: "CheckCompleted",
-              family: "ipv6",
-              checkedAt: Date.now(),
-              result,
-            }),
-          ),
-          Effect.zipRight(Effect.sleep(Duration.millis(intervalMs))),
-          Effect.forever,
-        ),
-      ],
+      ),
       { concurrency: "unbounded" },
     ),
   );

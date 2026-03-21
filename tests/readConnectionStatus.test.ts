@@ -5,11 +5,15 @@ import { readConnectionStatus } from "../src/services/connectivity/readConnectio
 import { ProcessService } from "../src/services/process/ProcessService";
 
 describe("readConnectionStatus", () => {
-  test("uses an IPv4-specific probe and maps success", async () => {
+  test("uses an IPv4-specific ping probe and maps success", async () => {
     expect(
       await Effect.runPromise(
         Effect.provideService(
-          readConnectionStatus({ family: "ipv4", target: "1.1.1.1" }),
+          readConnectionStatus({
+            family: "ipv4",
+            signal: "ping",
+            target: "1.1.1.1",
+          }),
           ProcessService,
           {
             run: ({ command, args }) =>
@@ -40,12 +44,13 @@ describe("readConnectionStatus", () => {
     });
   });
 
-  test("uses an IPv6-specific probe and maps failures independently", async () => {
+  test("uses an IPv6-specific ping probe and maps failures independently", async () => {
     expect(
       await Effect.runPromise(
         Effect.provideService(
           readConnectionStatus({
             family: "ipv6",
+            signal: "ping",
             target: "2001:4860:4860::8888",
           }),
           ProcessService,
@@ -74,6 +79,44 @@ describe("readConnectionStatus", () => {
       status: "offline",
       detail: "sendto: No route to host",
       latencyMs: null,
+    });
+  });
+
+  test("uses an http-specific curl probe and maps latency", async () => {
+    expect(
+      await Effect.runPromise(
+        Effect.provideService(
+          readConnectionStatus({
+            family: "ipv4",
+            signal: "http",
+            target: "https://1.1.1.1/cdn-cgi/trace",
+          }),
+          ProcessService,
+          {
+            run: ({ command, args }) =>
+              Effect.succeed(
+                command === "curl" &&
+                  args.includes("-4") &&
+                  args.includes("--write-out") &&
+                  args.includes("https://1.1.1.1/cdn-cgi/trace")
+                  ? {
+                      exitCode: 0,
+                      stdout: "200 0.120",
+                      stderr: "",
+                    }
+                  : {
+                      exitCode: 1,
+                      stdout: "",
+                      stderr: "wrong command",
+                    },
+              ),
+          },
+        ),
+      ),
+    ).toEqual({
+      status: "online",
+      detail: "HTTP 200 in 120.0 ms",
+      latencyMs: 120,
     });
   });
 });

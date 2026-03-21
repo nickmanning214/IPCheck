@@ -10,7 +10,7 @@ describe("connectivityLiveLayer", () => {
       await Effect.runPromise(
         Effect.provide(
           Effect.flatMap(ConnectivityService, ({ readConnectionStatus }) =>
-            readConnectionStatus({ family: "ipv6" }),
+            readConnectionStatus({ family: "ipv6", signal: "ping" }),
           ),
           pipe(
             ConnectivityService.Live,
@@ -18,16 +18,16 @@ describe("connectivityLiveLayer", () => {
               Layer.succeed(ProcessService, {
                 run: ({ args }) =>
                   Effect.succeed(
-                    args.includes("1.1.1.1")
+                    args.includes("2001:4860:4860::8888")
                       ? {
-                          exitCode: 0,
-                          stdout: "ok",
-                          stderr: "",
-                        }
-                      : {
                           exitCode: 1,
                           stdout: "",
                           stderr: "IPv6 unreachable",
+                        }
+                      : {
+                          exitCode: 0,
+                          stdout: "ok",
+                          stderr: "",
                         },
                   ),
               }),

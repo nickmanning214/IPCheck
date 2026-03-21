@@ -3,22 +3,36 @@ import { describe, expect, test } from "bun:test";
 import { readProbeTargets } from "../src/services/connectivity/readProbeTargets";
 
 describe("readProbeTargets", () => {
-  test("falls back to default IPv4 and IPv6 targets", () => {
+  test("falls back to default ping and http targets", () => {
     expect(readProbeTargets({})).toEqual({
-      ipv4: "1.1.1.1",
-      ipv6: "2001:4860:4860::8888",
+      ping: {
+        ipv4: "1.1.1.1",
+        ipv6: "2001:4860:4860::8888",
+      },
+      http: {
+        ipv4: "https://1.1.1.1/cdn-cgi/trace",
+        ipv6: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
+      },
     });
   });
 
   test("uses configured targets when provided", () => {
     expect(
       readProbeTargets({
-        IPCHECK_IPV4_TARGET: "8.8.8.8",
-        IPCHECK_IPV6_TARGET: "2001:4860:4860::8844",
+        IPCHECK_PING_IPV4_TARGET: "8.8.8.8",
+        IPCHECK_PING_IPV6_TARGET: "2001:4860:4860::8844",
+        IPCHECK_HTTP_IPV4_TARGET: "https://example.com/ipv4",
+        IPCHECK_HTTP_IPV6_TARGET: "https://example.com/ipv6",
       }),
     ).toEqual({
-      ipv4: "8.8.8.8",
-      ipv6: "2001:4860:4860::8844",
+      ping: {
+        ipv4: "8.8.8.8",
+        ipv6: "2001:4860:4860::8844",
+      },
+      http: {
+        ipv4: "https://example.com/ipv4",
+        ipv6: "https://example.com/ipv6",
+      },
     });
   });
 });

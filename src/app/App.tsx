@@ -5,7 +5,7 @@ import type { ProbeTargets } from "../domain/ProbeTargets";
 import { useFork } from "../hooks/useFork";
 import { ConnectivityService } from "../services/connectivity/ConnectivityService";
 import { readProbeTargets } from "../services/connectivity/readProbeTargets";
-import { ConnectionStatusRow } from "../ui/ConnectionStatusRow";
+import { SignalSection } from "../ui/SignalSection";
 import { appReducer } from "./appReducer";
 import { makeInitialAppState } from "./initialAppState";
 import { runMonitorLoop } from "./runMonitorLoop";
@@ -42,19 +42,19 @@ export const App = ({
             Continuous IPv4 and IPv6 reachability monitor
           </Text>
           <Newline />
-          <ConnectionStatusRow
-            label="IPv4"
+          <SignalSection
+            label="Ping"
             now={Date.now()}
-            result={state.ipv4}
+            state={state.ping}
+            targets={probeTargets.ping}
           />
           <Newline />
-          <ConnectionStatusRow
-            label="IPv6"
+          <SignalSection
+            label="HTTP"
             now={Date.now()}
-            result={state.ipv6}
+            state={state.http}
+            targets={probeTargets.http}
           />
-          <Text color="gray">IPv4 target: {probeTargets.ipv4}</Text>
-          <Text color="gray">IPv6 target: {probeTargets.ipv6}</Text>
           <Text color="gray">
             Polls each family every {(intervalMs / 1000).toFixed(1)} seconds.
             Press Ctrl+C to exit.

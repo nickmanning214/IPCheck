@@ -9,81 +9,199 @@ const rollingWindowLimitMs = 5 * 60 * 1000;
 export const appReducer = (state: AppState, action: AppAction) =>
   pipe(
     Match.value(action),
-    Match.when({ _tag: "CheckStarted", family: "ipv4" }, () => ({
-      ...state,
-      ipv4: {
-        ...state.ipv4,
-        isChecking: true,
-      },
-    })),
-    Match.when({ _tag: "CheckStarted", family: "ipv6" }, () => ({
-      ...state,
-      ipv6: {
-        ...state.ipv6,
-        isChecking: true,
-      },
-    })),
     Match.when(
-      { _tag: "CheckCompleted", family: "ipv4" },
-      ({ checkedAt, result }) => ({
+      { _tag: "CheckStarted", signal: "ping", family: "ipv4" },
+      () => ({
         ...state,
-        ipv4: {
-          ...state.ipv4,
-          status: result.status,
-          isChecking: false,
-          detail: result.detail,
-          lastCheckedAt: checkedAt,
-          successfulChecks:
-            state.ipv4.successfulChecks + (result.status === "online" ? 1 : 0),
-          totalChecks: state.ipv4.totalChecks + 1,
-          latencyHistoryMs:
-            result.latencyMs === null
-              ? state.ipv4.latencyHistoryMs
-              : [...state.ipv4.latencyHistoryMs, result.latencyMs].slice(
-                  -latencyHistoryLimit,
-                ),
-          recentChecks: [
-            ...state.ipv4.recentChecks.filter(
-              ({ checkedAt: sampleCheckedAt }) =>
-                sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-            ),
-            {
-              checkedAt,
-              isSuccess: result.status === "online",
-            },
-          ],
+        ping: {
+          ...state.ping,
+          ipv4: {
+            ...state.ping.ipv4,
+            isChecking: true,
+          },
         },
       }),
     ),
     Match.when(
-      { _tag: "CheckCompleted", family: "ipv6" },
+      { _tag: "CheckStarted", signal: "ping", family: "ipv6" },
+      () => ({
+        ...state,
+        ping: {
+          ...state.ping,
+          ipv6: {
+            ...state.ping.ipv6,
+            isChecking: true,
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckStarted", signal: "http", family: "ipv4" },
+      () => ({
+        ...state,
+        http: {
+          ...state.http,
+          ipv4: {
+            ...state.http.ipv4,
+            isChecking: true,
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckStarted", signal: "http", family: "ipv6" },
+      () => ({
+        ...state,
+        http: {
+          ...state.http,
+          ipv6: {
+            ...state.http.ipv6,
+            isChecking: true,
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckCompleted", signal: "ping", family: "ipv4" },
       ({ checkedAt, result }) => ({
         ...state,
-        ipv6: {
-          ...state.ipv6,
-          status: result.status,
-          isChecking: false,
-          detail: result.detail,
-          lastCheckedAt: checkedAt,
-          successfulChecks:
-            state.ipv6.successfulChecks + (result.status === "online" ? 1 : 0),
-          totalChecks: state.ipv6.totalChecks + 1,
-          latencyHistoryMs:
-            result.latencyMs === null
-              ? state.ipv6.latencyHistoryMs
-              : [...state.ipv6.latencyHistoryMs, result.latencyMs].slice(
-                  -latencyHistoryLimit,
-                ),
-          recentChecks: [
-            ...state.ipv6.recentChecks.filter(
-              ({ checkedAt: sampleCheckedAt }) =>
-                sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-            ),
-            {
-              checkedAt,
-              isSuccess: result.status === "online",
-            },
-          ],
+        ping: {
+          ...state.ping,
+          ipv4: {
+            ...state.ping.ipv4,
+            status: result.status,
+            isChecking: false,
+            detail: result.detail,
+            lastCheckedAt: checkedAt,
+            successfulChecks:
+              state.ping.ipv4.successfulChecks +
+              (result.status === "online" ? 1 : 0),
+            totalChecks: state.ping.ipv4.totalChecks + 1,
+            latencyHistoryMs:
+              result.latencyMs === null
+                ? state.ping.ipv4.latencyHistoryMs
+                : [...state.ping.ipv4.latencyHistoryMs, result.latencyMs].slice(
+                    -latencyHistoryLimit,
+                  ),
+            recentChecks: [
+              ...state.ping.ipv4.recentChecks.filter(
+                ({ checkedAt: sampleCheckedAt }) =>
+                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+              ),
+              {
+                checkedAt,
+                isSuccess: result.status === "online",
+              },
+            ],
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckCompleted", signal: "ping", family: "ipv6" },
+      ({ checkedAt, result }) => ({
+        ...state,
+        ping: {
+          ...state.ping,
+          ipv6: {
+            ...state.ping.ipv6,
+            status: result.status,
+            isChecking: false,
+            detail: result.detail,
+            lastCheckedAt: checkedAt,
+            successfulChecks:
+              state.ping.ipv6.successfulChecks +
+              (result.status === "online" ? 1 : 0),
+            totalChecks: state.ping.ipv6.totalChecks + 1,
+            latencyHistoryMs:
+              result.latencyMs === null
+                ? state.ping.ipv6.latencyHistoryMs
+                : [...state.ping.ipv6.latencyHistoryMs, result.latencyMs].slice(
+                    -latencyHistoryLimit,
+                  ),
+            recentChecks: [
+              ...state.ping.ipv6.recentChecks.filter(
+                ({ checkedAt: sampleCheckedAt }) =>
+                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+              ),
+              {
+                checkedAt,
+                isSuccess: result.status === "online",
+              },
+            ],
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckCompleted", signal: "http", family: "ipv4" },
+      ({ checkedAt, result }) => ({
+        ...state,
+        http: {
+          ...state.http,
+          ipv4: {
+            ...state.http.ipv4,
+            status: result.status,
+            isChecking: false,
+            detail: result.detail,
+            lastCheckedAt: checkedAt,
+            successfulChecks:
+              state.http.ipv4.successfulChecks +
+              (result.status === "online" ? 1 : 0),
+            totalChecks: state.http.ipv4.totalChecks + 1,
+            latencyHistoryMs:
+              result.latencyMs === null
+                ? state.http.ipv4.latencyHistoryMs
+                : [...state.http.ipv4.latencyHistoryMs, result.latencyMs].slice(
+                    -latencyHistoryLimit,
+                  ),
+            recentChecks: [
+              ...state.http.ipv4.recentChecks.filter(
+                ({ checkedAt: sampleCheckedAt }) =>
+                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+              ),
+              {
+                checkedAt,
+                isSuccess: result.status === "online",
+              },
+            ],
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckCompleted", signal: "http", family: "ipv6" },
+      ({ checkedAt, result }) => ({
+        ...state,
+        http: {
+          ...state.http,
+          ipv6: {
+            ...state.http.ipv6,
+            status: result.status,
+            isChecking: false,
+            detail: result.detail,
+            lastCheckedAt: checkedAt,
+            successfulChecks:
+              state.http.ipv6.successfulChecks +
+              (result.status === "online" ? 1 : 0),
+            totalChecks: state.http.ipv6.totalChecks + 1,
+            latencyHistoryMs:
+              result.latencyMs === null
+                ? state.http.ipv6.latencyHistoryMs
+                : [...state.http.ipv6.latencyHistoryMs, result.latencyMs].slice(
+                    -latencyHistoryLimit,
+                  ),
+            recentChecks: [
+              ...state.http.ipv6.recentChecks.filter(
+                ({ checkedAt: sampleCheckedAt }) =>
+                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+              ),
+              {
+                checkedAt,
+                isSuccess: result.status === "online",
+              },
+            ],
+          },
         },
       }),
     ),

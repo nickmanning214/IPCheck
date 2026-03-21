@@ -1,4 +1,10 @@
 export type ProbeTargets = {
-  readonly ipv4: string;
-  readonly ipv6: string;
+  readonly ping: {
+    readonly ipv4: string;
+    readonly ipv6: string;
+  };
+  readonly http: {
+    readonly ipv4: string;
+    readonly ipv6: string;
+  };
 };

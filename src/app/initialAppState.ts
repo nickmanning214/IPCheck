@@ -1,5 +1,16 @@
 import type { AppState } from "../domain/AppState";
 
+const initialConnectionState = ({ detail }: { readonly detail: string }) => ({
+  status: "unknown" as const,
+  isChecking: false,
+  detail,
+  lastCheckedAt: null,
+  successfulChecks: 0,
+  totalChecks: 0,
+  latencyHistoryMs: [],
+  recentChecks: [],
+});
+
 export const makeInitialAppState = ({
   startedAt,
 }: {
@@ -7,25 +18,21 @@ export const makeInitialAppState = ({
 }) =>
   ({
     startedAt,
-    ipv4: {
-      status: "unknown",
-      isChecking: false,
-      detail: "Waiting for the first IPv4 check",
-      lastCheckedAt: null,
-      successfulChecks: 0,
-      totalChecks: 0,
-      latencyHistoryMs: [],
-      recentChecks: [],
+    ping: {
+      ipv4: initialConnectionState({
+        detail: "Waiting for the first IPv4 ping check",
+      }),
+      ipv6: initialConnectionState({
+        detail: "Waiting for the first IPv6 ping check",
+      }),
     },
-    ipv6: {
-      status: "unknown",
-      isChecking: false,
-      detail: "Waiting for the first IPv6 check",
-      lastCheckedAt: null,
-      successfulChecks: 0,
-      totalChecks: 0,
-      latencyHistoryMs: [],
-      recentChecks: [],
+    http: {
+      ipv4: initialConnectionState({
+        detail: "Waiting for the first IPv4 HTTP check",
+      }),
+      ipv6: initialConnectionState({
+        detail: "Waiting for the first IPv6 HTTP check",
+      }),
     },
   }) satisfies AppState;
 
