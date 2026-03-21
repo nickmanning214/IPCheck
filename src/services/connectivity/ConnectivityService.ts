@@ -1,14 +1,17 @@
 import type { Effect as Fx } from "effect";
 import { Context, Effect, Layer, pipe } from "effect";
 
-import type { ConnectivitySnapshot } from "../../domain/ConnectivitySnapshot";
+import type { CheckResult } from "../../domain/CheckResult";
+import type { Family } from "../../domain/Family";
 import { ProcessService } from "../process/ProcessService";
-import { readConnectivitySnapshot } from "./readConnectivitySnapshot";
+import { readConnectionStatus } from "./readConnectionStatus";
 
 export class ConnectivityService extends Context.Tag("ConnectivityService")<
   ConnectivityService,
   {
-    readonly readSnapshot: () => Fx.Effect<ConnectivitySnapshot>;
+    readonly readConnectionStatus: (input: {
+      readonly family: Family;
+    }) => Fx.Effect<CheckResult>;
   }
 >() {
   static Live = Layer.effect(
@@ -16,9 +19,9 @@ export class ConnectivityService extends Context.Tag("ConnectivityService")<
     pipe(
       ProcessService,
       Effect.map((processService) => ({
-        readSnapshot: () =>
+        readConnectionStatus: ({ family }: { readonly family: Family }) =>
           pipe(
-            readConnectivitySnapshot(),
+            readConnectionStatus({ family }),
             Effect.provideService(ProcessService, processService),
           ),
       })),

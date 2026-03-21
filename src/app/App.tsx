@@ -4,21 +4,23 @@ import { Effect, Layer, pipe } from "effect";
 import { useFork } from "../hooks/useFork";
 import { ConnectivityService } from "../services/connectivity/ConnectivityService";
 import { ConnectionStatusRow } from "../ui/ConnectionStatusRow";
-import { formatCheckedAt } from "../ui/formatCheckedAt";
 import { appReducer } from "./appReducer";
-import { initialAppState } from "./initialAppState";
+import { makeInitialAppState } from "./initialAppState";
 import { runMonitorLoop } from "./runMonitorLoop";
 import { useEffectReducer } from "./useEffectReducer";
 
 export const App = ({
-  intervalMs = 5000,
+  intervalMs = 2000,
   connectivityLayer,
 }: {
   readonly intervalMs?: number;
   readonly connectivityLayer: Layer.Layer<ConnectivityService>;
 }) =>
   pipe(
-    useEffectReducer(appReducer, initialAppState),
+    useEffectReducer(
+      appReducer,
+      makeInitialAppState({ startedAt: Date.now() }),
+    ),
     ({ state, dispatch }) => (
       useFork(
         pipe(
@@ -39,11 +41,9 @@ export const App = ({
           <ConnectionStatusRow label="IPv4" result={state.ipv4} />
           <Newline />
           <ConnectionStatusRow label="IPv6" result={state.ipv6} />
-          <Newline />
-          <Text>{formatCheckedAt({ checkedAt: state.checkedAt })}</Text>
           <Text color="gray">
-            Runs every {Math.round(intervalMs / 1000)} seconds. Press Ctrl+C to
-            exit.
+            Polls each family every {(intervalMs / 1000).toFixed(1)} seconds.
+            Press Ctrl+C to exit.
           </Text>
         </Box>
       )

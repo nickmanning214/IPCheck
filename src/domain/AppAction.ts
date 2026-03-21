@@ -1,8 +1,11 @@
-import type { ConnectivitySnapshot } from "./ConnectivitySnapshot";
+import type { CheckResult } from "./CheckResult";
+import type { Family } from "./Family";
 
 export type AppAction =
-  | { readonly _tag: "CheckStarted" }
+  | { readonly _tag: "CheckStarted"; readonly family: Family }
   | {
-      readonly _tag: "SnapshotUpdated";
-      readonly snapshot: ConnectivitySnapshot;
+      readonly _tag: "CheckCompleted";
+      readonly family: Family;
+      readonly checkedAt: number;
+      readonly result: CheckResult;
     };

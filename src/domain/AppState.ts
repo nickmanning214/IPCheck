@@ -1,3 +1,7 @@
-import type { ConnectivitySnapshot } from "./ConnectivitySnapshot";
+import type { ConnectionState } from "./ConnectionState";
 
-export type AppState = ConnectivitySnapshot;
+export type AppState = {
+  readonly startedAt: number;
+  readonly ipv4: ConnectionState;
+  readonly ipv6: ConnectionState;
+};

@@ -1,44 +1,26 @@
 import { Effect, Match, pipe } from "effect";
 
 import type { CheckResult } from "../../domain/CheckResult";
+import type { Family } from "../../domain/Family";
 import { ProcessService } from "../process/ProcessService";
 import { pickFailureDetail } from "./pickFailureDetail";
+import { pickSuccessDetail } from "./pickSuccessDetail";
 
 const { run } = Effect.serviceFunctions(ProcessService);
 
-export const readConnectionStatus = ({
-  family,
-}: {
-  readonly family: "ipv4" | "ipv6";
-}) =>
+export const readConnectionStatus = ({ family }: { readonly family: Family }) =>
   pipe(
     Match.value(family),
     Match.when("ipv4", () =>
       run({
-        command: "curl",
-        args: [
-          "-4",
-          "--silent",
-          "--show-error",
-          "--max-time",
-          "3",
-          "--insecure",
-          "https://1.1.1.1/cdn-cgi/trace",
-        ],
+        command: "ping",
+        args: ["-c", "1", "-W", "1000", "1.1.1.1"],
       }),
     ),
     Match.when("ipv6", () =>
       run({
-        command: "curl",
-        args: [
-          "-6",
-          "--silent",
-          "--show-error",
-          "--max-time",
-          "3",
-          "--insecure",
-          "https://[2606:4700:4700::1111]/cdn-cgi/trace",
-        ],
+        command: "ping6",
+        args: ["-c", "1", "2001:4860:4860::8888"],
       }),
     ),
     Match.exhaustive,
@@ -47,13 +29,7 @@ export const readConnectionStatus = ({
         onTrue: () =>
           Effect.succeed<CheckResult>({
             status: "online",
-            detail: pipe(stdout.trim(), (output) =>
-              pipe(
-                Match.value(output.length > 0),
-                Match.when(true, () => "Reachable"),
-                Match.orElse(() => "Reachable"),
-              ),
-            ),
+            detail: pickSuccessDetail({ stdout }),
           }),
         onFalse: () =>
           Effect.succeed<CheckResult>({

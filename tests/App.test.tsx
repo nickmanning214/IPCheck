@@ -7,23 +7,23 @@ import { App } from "../src/app/App";
 import { ConnectivityService } from "../src/services/connectivity/ConnectivityService";
 
 describe("App", () => {
-  test("renders live connectivity results in the terminal", async () => {
+  test("renders per-family uptime and independent statuses in the terminal", async () => {
     const app = render(
       <App
         intervalMs={60000}
         connectivityLayer={Layer.succeed(ConnectivityService, {
-          readSnapshot: () =>
-            Effect.succeed({
-              ipv4: {
-                status: "online",
-                detail: "Address 203.0.113.10",
-              },
-              ipv6: {
-                status: "offline",
-                detail: "Network is unreachable",
-              },
-              checkedAt: 123,
-            }),
+          readConnectionStatus: ({ family }) =>
+            Effect.succeed(
+              family === "ipv4"
+                ? {
+                    status: "online",
+                    detail: "Reply in 10.0 ms",
+                  }
+                : {
+                    status: "offline",
+                    detail: "Network is unreachable",
+                  },
+            ),
         })}
       />,
     );
@@ -34,6 +34,9 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("ONLINE");
     expect(app.lastFrame()).toContain("IPv6");
     expect(app.lastFrame()).toContain("OFFLINE");
+    expect(app.lastFrame()).toContain("Uptime since start: 100.0%");
+    expect(app.lastFrame()).toContain("Uptime since start: 0.0%");
+    expect(app.lastFrame()).toContain("Last checked at");
 
     app.unmount();
   });

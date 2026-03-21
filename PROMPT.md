@@ -15,22 +15,25 @@ This project is a terminal app.
 
 1. The app continuously monitors IPv4 and IPv6 connectivity in the terminal instead of running a one-shot shell script.
 2. The terminal UI always shows the latest known status for IPv4 and IPv6, including whether each check is currently running, reachable, or failing.
-3. The app refreshes connectivity checks on a repeating interval without exiting on its own.
-4. The UI shows the last completed check time and keeps the terminal view readable during long-running monitoring.
+3. The app refreshes IPv4 and IPv6 checks independently on a repeating interval without exiting on its own.
+4. The UI shows the last completed check time for each family, uptime percentage since the app started, and keeps the terminal view readable during long-running monitoring.
 5. The connectivity checks should probe IPv4 and IPv6 directly so the app can still report transport failures even when DNS is unavailable.
+6. The monitor should keep the last online or offline status visible while a new probe is in flight instead of replacing everything with a blocking global checking state.
 
 ## Vertical Features
 
 ### UI
 
 - Render a persistent Ink dashboard for IPv4 and IPv6 connectivity.
-- Surface check status, detail text, and last checked time in a continuously updating terminal layout.
+- Surface per-family status, detail text, uptime percentage, and last checked time in a continuously updating terminal layout.
+- Show when a family is actively being polled without hiding its last completed result.
 
 ### Connectivity Runtime
 
 - Perform IPv4 and IPv6 connectivity checks through effectified external process services.
 - Convert raw process results into app-friendly connectivity states.
 - Probe literal IPv4 and IPv6 endpoints instead of relying on hostname resolution.
+- Poll IPv4 and IPv6 independently so one slow family does not block updates for the other.
 
 ### Process Service
 
@@ -41,3 +44,4 @@ This project is a terminal app.
 ### Connectivity Monitoring
 
 - Support ongoing IPv4 and IPv6 health visibility from the terminal UI through the process service and the monitoring loop.
+- Track per-family uptime percentage from app start based on completed probes.

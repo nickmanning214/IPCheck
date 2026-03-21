@@ -9,8 +9,8 @@ describe("connectivityLiveLayer", () => {
     expect(
       await Effect.runPromise(
         Effect.provide(
-          Effect.flatMap(ConnectivityService, ({ readSnapshot }) =>
-            readSnapshot(),
+          Effect.flatMap(ConnectivityService, ({ readConnectionStatus }) =>
+            readConnectionStatus({ family: "ipv6" }),
           ),
           pipe(
             ConnectivityService.Live,
@@ -36,15 +36,8 @@ describe("connectivityLiveLayer", () => {
         ),
       ),
     ).toEqual({
-      ipv4: {
-        status: "online",
-        detail: "Reachable",
-      },
-      ipv6: {
-        status: "offline",
-        detail: "IPv6 unreachable",
-      },
-      checkedAt: expect.any(Number),
+      status: "offline",
+      detail: "IPv6 unreachable",
     });
   });
 });
