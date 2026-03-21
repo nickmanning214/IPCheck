@@ -17,11 +17,20 @@ export const SignalSection = ({
     readonly ipv6: string;
   };
 }) => (
-  <Box flexDirection="column">
+  <Box
+    flexDirection="column"
+    borderStyle="round"
+    borderColor="cyan"
+    paddingX={1}
+    flexGrow={1}
+    flexBasis={0}
+  >
     <Text bold>{label}</Text>
-    <ConnectionStatusRow label="IPv4" now={now} result={state.ipv4} />
+    <Box columnGap={1}>
+      <ConnectionStatusRow label="IPv4" now={now} result={state.ipv4} />
+      <ConnectionStatusRow label="IPv6" now={now} result={state.ipv6} />
+    </Box>
     <Newline />
-    <ConnectionStatusRow label="IPv6" now={now} result={state.ipv6} />
     <Text color="gray">
       {label} IPv4 target: {targets.ipv4}
     </Text>

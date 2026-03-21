@@ -42,26 +42,27 @@ export const App = ({
             Continuous IPv4 and IPv6 reachability monitor
           </Text>
           <Newline />
-          <SignalSection
-            label="Ping"
-            now={Date.now()}
-            state={state.ping}
-            targets={probeTargets.ping}
-          />
+          <Box columnGap={1}>
+            <SignalSection
+              label="Ping"
+              now={Date.now()}
+              state={state.ping}
+              targets={probeTargets.ping}
+            />
+            <SignalSection
+              label="HTTP"
+              now={Date.now()}
+              state={state.http}
+              targets={probeTargets.http}
+            />
+            <SignalSection
+              label="Direct HTTPS"
+              now={Date.now()}
+              state={state.direct}
+              targets={probeTargets.direct}
+            />
+          </Box>
           <Newline />
-          <SignalSection
-            label="HTTP"
-            now={Date.now()}
-            state={state.http}
-            targets={probeTargets.http}
-          />
-          <Newline />
-          <SignalSection
-            label="Direct HTTPS"
-            now={Date.now()}
-            state={state.direct}
-            targets={probeTargets.direct}
-          />
           <Text color="gray">
             Polls each family every {(intervalMs / 1000).toFixed(1)} seconds.
             Press Ctrl+C to exit.
