@@ -23,6 +23,7 @@ This project is a terminal app.
 8. The UI should show recent latency history and rolling 1-minute and 5-minute uptime windows for each family.
 9. The app should support both raw reachability checks and hostname-based HTTP-style checks so browser-like slowness can be compared against basic network health.
 10. HTTP probes should use bounded timeouts so a wedged web request cannot leave the monitor stuck in a polling state indefinitely.
+11. The app should also support a direct-IP HTTPS probe so raw ping, hostname HTTP, and direct HTTPS can be compared side by side in the same run.
 
 ## Vertical Features
 
@@ -39,7 +40,7 @@ This project is a terminal app.
 - Probe literal IPv4 and IPv6 endpoints instead of relying on hostname resolution.
 - Poll IPv4 and IPv6 independently so one slow family does not block updates for the other.
 - Allow probe targets to be configured from the runtime environment.
-- Support both ICMP-style reachability checks and hostname-based HTTP-style checks for each family.
+- Support ICMP-style reachability checks, hostname-based HTTP-style checks, and direct-IP HTTPS checks for each family.
 - Bound HTTP probe duration with explicit timeouts so the UI keeps advancing even during severe slowness.
 
 ### Process Service
@@ -53,4 +54,4 @@ This project is a terminal app.
 - Support ongoing IPv4 and IPv6 health visibility from the terminal UI through the process service and the monitoring loop.
 - Track per-family uptime percentage from app start based on completed probes.
 - Track per-family rolling uptime windows and recent latency history from completed probes.
-- Let users compare raw network health against browser-like hostname-based HTTP health in the same run.
+- Let users compare raw network health against both browser-like hostname HTTP health and direct-IP HTTPS health in the same run.

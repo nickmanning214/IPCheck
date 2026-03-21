@@ -10,4 +10,8 @@ export type AppState = {
     readonly ipv4: ConnectionState;
     readonly ipv6: ConnectionState;
   };
+  readonly direct: {
+    readonly ipv4: ConnectionState;
+    readonly ipv6: ConnectionState;
+  };
 };

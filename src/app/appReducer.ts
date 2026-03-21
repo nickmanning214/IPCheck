@@ -62,6 +62,32 @@ export const appReducer = (state: AppState, action: AppAction) =>
       }),
     ),
     Match.when(
+      { _tag: "CheckStarted", signal: "direct", family: "ipv4" },
+      () => ({
+        ...state,
+        direct: {
+          ...state.direct,
+          ipv4: {
+            ...state.direct.ipv4,
+            isChecking: true,
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckStarted", signal: "direct", family: "ipv6" },
+      () => ({
+        ...state,
+        direct: {
+          ...state.direct,
+          ipv6: {
+            ...state.direct.ipv6,
+            isChecking: true,
+          },
+        },
+      }),
+    ),
+    Match.when(
       { _tag: "CheckCompleted", signal: "ping", family: "ipv4" },
       ({ checkedAt, result }) => ({
         ...state,
@@ -193,6 +219,80 @@ export const appReducer = (state: AppState, action: AppAction) =>
                   ),
             recentChecks: [
               ...state.http.ipv6.recentChecks.filter(
+                ({ checkedAt: sampleCheckedAt }) =>
+                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+              ),
+              {
+                checkedAt,
+                isSuccess: result.status === "online",
+              },
+            ],
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckCompleted", signal: "direct", family: "ipv4" },
+      ({ checkedAt, result }) => ({
+        ...state,
+        direct: {
+          ...state.direct,
+          ipv4: {
+            ...state.direct.ipv4,
+            status: result.status,
+            isChecking: false,
+            detail: result.detail,
+            lastCheckedAt: checkedAt,
+            successfulChecks:
+              state.direct.ipv4.successfulChecks +
+              (result.status === "online" ? 1 : 0),
+            totalChecks: state.direct.ipv4.totalChecks + 1,
+            latencyHistoryMs:
+              result.latencyMs === null
+                ? state.direct.ipv4.latencyHistoryMs
+                : [
+                    ...state.direct.ipv4.latencyHistoryMs,
+                    result.latencyMs,
+                  ].slice(-latencyHistoryLimit),
+            recentChecks: [
+              ...state.direct.ipv4.recentChecks.filter(
+                ({ checkedAt: sampleCheckedAt }) =>
+                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+              ),
+              {
+                checkedAt,
+                isSuccess: result.status === "online",
+              },
+            ],
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "CheckCompleted", signal: "direct", family: "ipv6" },
+      ({ checkedAt, result }) => ({
+        ...state,
+        direct: {
+          ...state.direct,
+          ipv6: {
+            ...state.direct.ipv6,
+            status: result.status,
+            isChecking: false,
+            detail: result.detail,
+            lastCheckedAt: checkedAt,
+            successfulChecks:
+              state.direct.ipv6.successfulChecks +
+              (result.status === "online" ? 1 : 0),
+            totalChecks: state.direct.ipv6.totalChecks + 1,
+            latencyHistoryMs:
+              result.latencyMs === null
+                ? state.direct.ipv6.latencyHistoryMs
+                : [
+                    ...state.direct.ipv6.latencyHistoryMs,
+                    result.latencyMs,
+                  ].slice(-latencyHistoryLimit),
+            recentChecks: [
+              ...state.direct.ipv6.recentChecks.filter(
                 ({ checkedAt: sampleCheckedAt }) =>
                   sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
               ),

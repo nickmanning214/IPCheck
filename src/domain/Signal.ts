@@ -1,1 +1,1 @@
-export type Signal = "ping" | "http";
+export type Signal = "ping" | "http" | "direct";

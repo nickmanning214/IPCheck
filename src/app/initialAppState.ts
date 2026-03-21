@@ -34,6 +34,14 @@ export const makeInitialAppState = ({
         detail: "Waiting for the first IPv6 HTTP check",
       }),
     },
+    direct: {
+      ipv4: initialConnectionState({
+        detail: "Waiting for the first IPv4 direct HTTPS check",
+      }),
+      ipv6: initialConnectionState({
+        detail: "Waiting for the first IPv6 direct HTTPS check",
+      }),
+    },
   }) satisfies AppState;
 
 export const initialAppState = makeInitialAppState({ startedAt: 0 });

@@ -56,6 +56,7 @@ describe("appReducer", () => {
           ],
         },
       },
+      direct: initialAppState.direct,
       startedAt: 0,
     });
   });
@@ -114,6 +115,42 @@ describe("appReducer", () => {
             },
             {
               checkedAt: 310_000,
+              isSuccess: true,
+            },
+          ],
+        },
+      },
+    });
+  });
+
+  test("updates direct HTTPS checks independently from ping and hostname HTTP", () => {
+    expect(
+      appReducer(initialAppState, {
+        _tag: "CheckCompleted",
+        signal: "direct",
+        family: "ipv4",
+        checkedAt: 500,
+        result: {
+          status: "online",
+          detail: "Response ip=198.51.100.20",
+          latencyMs: 80,
+        },
+      }),
+    ).toEqual({
+      ...initialAppState,
+      direct: {
+        ...initialAppState.direct,
+        ipv4: {
+          status: "online",
+          isChecking: false,
+          detail: "Response ip=198.51.100.20",
+          lastCheckedAt: 500,
+          successfulChecks: 1,
+          totalChecks: 1,
+          latencyHistoryMs: [80],
+          recentChecks: [
+            {
+              checkedAt: 500,
               isSuccess: true,
             },
           ],

@@ -109,7 +109,10 @@ export const readConnectionStatus = ({
                     Match.when(null, () =>
                       Effect.succeed<CheckResult>({
                         status: "online",
-                        detail: body.length > 0 ? `Address ${body}` : "HTTP reachable",
+                        detail:
+                          body.length > 0
+                            ? `Address ${body}`
+                            : "HTTP reachable",
                         latencyMs: null,
                       }),
                     ),
@@ -120,6 +123,91 @@ export const readConnectionStatus = ({
                           body.length > 0
                             ? `Address ${body}`
                             : `HTTP ${match[1]} in ${(Number(match[2]) * 1000).toFixed(1)} ms`,
+                        latencyMs: Number(match[2]) * 1000,
+                      }),
+                    ),
+                  ),
+              ),
+            onFalse: () =>
+              Effect.succeed<CheckResult>({
+                status: "offline",
+                detail: pickFailureDetail({ stderr, stdout }),
+                latencyMs: null,
+              }),
+          }),
+        ),
+      ),
+    ),
+    Match.when("direct", () =>
+      pipe(
+        Match.value(family),
+        Match.when("ipv4", () =>
+          run({
+            command: "curl",
+            args: [
+              "-4",
+              "--silent",
+              "--show-error",
+              "--insecure",
+              "--connect-timeout",
+              "2",
+              "--max-time",
+              "5",
+              "--write-out",
+              "\n%{http_code} %{time_total}",
+              target,
+            ],
+          }),
+        ),
+        Match.when("ipv6", () =>
+          run({
+            command: "curl",
+            args: [
+              "-6",
+              "--silent",
+              "--show-error",
+              "--insecure",
+              "--connect-timeout",
+              "2",
+              "--max-time",
+              "5",
+              "--write-out",
+              "\n%{http_code} %{time_total}",
+              target,
+            ],
+          }),
+        ),
+        Match.exhaustive,
+        Effect.flatMap(({ exitCode, stdout, stderr }) =>
+          Effect.if(exitCode === 0, {
+            onTrue: () =>
+              pipe(
+                stdout.trim().split("\n"),
+                (lines) => ({
+                  body: lines.slice(0, -1).join("\n").trim(),
+                  metrics: lines.at(-1) || "",
+                }),
+                ({ body, metrics }) =>
+                  pipe(
+                    metrics.match(/^(\d{3})\s+([0-9.]+)$/),
+                    Match.value,
+                    Match.when(null, () =>
+                      Effect.succeed<CheckResult>({
+                        status: "online",
+                        detail:
+                          body.length > 0
+                            ? `Response ${body}`
+                            : "HTTPS reachable",
+                        latencyMs: null,
+                      }),
+                    ),
+                    Match.orElse((match) =>
+                      Effect.succeed<CheckResult>({
+                        status: "online",
+                        detail:
+                          body.length > 0
+                            ? `Response ${body}`
+                            : `HTTPS ${match[1]} in ${(Number(match[2]) * 1000).toFixed(1)} ms`,
                         latencyMs: Number(match[2]) * 1000,
                       }),
                     ),

@@ -13,6 +13,10 @@ describe("readProbeTargets", () => {
         ipv4: "https://api.ipify.org",
         ipv6: "https://api64.ipify.org",
       },
+      direct: {
+        ipv4: "https://1.1.1.1/cdn-cgi/trace",
+        ipv6: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
+      },
     });
   });
 
@@ -23,6 +27,8 @@ describe("readProbeTargets", () => {
         IPCHECK_PING_IPV6_TARGET: "2001:4860:4860::8844",
         IPCHECK_HTTP_IPV4_TARGET: "https://example.com/ipv4",
         IPCHECK_HTTP_IPV6_TARGET: "https://example.com/ipv6",
+        IPCHECK_DIRECT_IPV4_TARGET: "https://198.51.100.4/direct",
+        IPCHECK_DIRECT_IPV6_TARGET: "https://[2001:db8::4]/direct",
       }),
     ).toEqual({
       ping: {
@@ -32,6 +38,10 @@ describe("readProbeTargets", () => {
       http: {
         ipv4: "https://example.com/ipv4",
         ipv6: "https://example.com/ipv6",
+      },
+      direct: {
+        ipv4: "https://198.51.100.4/direct",
+        ipv6: "https://[2001:db8::4]/direct",
       },
     });
   });

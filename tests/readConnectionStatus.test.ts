@@ -119,4 +119,42 @@ describe("readConnectionStatus", () => {
       latencyMs: 120,
     });
   });
+
+  test("uses a direct HTTPS curl probe independently from hostname HTTP checks", async () => {
+    expect(
+      await Effect.runPromise(
+        Effect.provideService(
+          readConnectionStatus({
+            family: "ipv6",
+            signal: "direct",
+            target: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
+          }),
+          ProcessService,
+          {
+            run: ({ command, args }) =>
+              Effect.succeed(
+                command === "curl" &&
+                  args.includes("-6") &&
+                  args.includes("--insecure") &&
+                  args.includes("https://[2606:4700:4700::1111]/cdn-cgi/trace")
+                  ? {
+                      exitCode: 0,
+                      stdout: "ip=2001:db8::10\n200 0.450",
+                      stderr: "",
+                    }
+                  : {
+                      exitCode: 1,
+                      stdout: "",
+                      stderr: "wrong command",
+                    },
+              ),
+          },
+        ),
+      ),
+    ).toEqual({
+      status: "online",
+      detail: "Response ip=2001:db8::10",
+      latencyMs: 450,
+    });
+  });
 });

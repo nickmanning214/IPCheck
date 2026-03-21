@@ -55,6 +55,13 @@ export const App = ({
             state={state.http}
             targets={probeTargets.http}
           />
+          <Newline />
+          <SignalSection
+            label="Direct HTTPS"
+            now={Date.now()}
+            state={state.direct}
+            targets={probeTargets.direct}
+          />
           <Text color="gray">
             Polls each family every {(intervalMs / 1000).toFixed(1)} seconds.
             Press Ctrl+C to exit.

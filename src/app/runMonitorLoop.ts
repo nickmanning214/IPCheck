@@ -19,6 +19,8 @@ export const runMonitorLoop = ({
         { signal: "ping" as const, family: "ipv6" as const },
         { signal: "http" as const, family: "ipv4" as const },
         { signal: "http" as const, family: "ipv6" as const },
+        { signal: "direct" as const, family: "ipv4" as const },
+        { signal: "direct" as const, family: "ipv6" as const },
       ].map(({ family, signal }) =>
         pipe(
           dispatch({ _tag: "CheckStarted", signal, family }),
