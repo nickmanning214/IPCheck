@@ -60,10 +60,14 @@ export const ConnectionStatusRow = ({
       ].join(" | ")}
     </Text>
     <Text color="gray">
-      {formatLatencyHistory({ latencyHistoryMs: result.latencyHistoryMs })}
+      {formatLatencyHistory({
+        latencyHistoryMs: result.latencyHistoryMs,
+      }).replace("Recent latency", "Lat")}
     </Text>
     <Text color="gray">
-      {formatCheckedAt({ checkedAt: result.lastCheckedAt })}
+      {formatCheckedAt({ checkedAt: result.lastCheckedAt })
+        .replace("Waiting for the first completed check", "Checked: waiting")
+        .replace("Last checked at ", "Checked ")}
     </Text>
   </Box>
 );

@@ -6,6 +6,7 @@ import { useFork } from "../hooks/useFork";
 import { ConnectivityService } from "../services/connectivity/ConnectivityService";
 import { readProbeTargets } from "../services/connectivity/readProbeTargets";
 import { SignalSection } from "../ui/SignalSection";
+import { SummaryRow } from "../ui/SummaryRow";
 import { appReducer } from "./appReducer";
 import { makeInitialAppState } from "./initialAppState";
 import { runMonitorLoop } from "./runMonitorLoop";
@@ -42,27 +43,32 @@ export const App = ({
             Continuous IPv4 and IPv6 reachability monitor
           </Text>
           <Newline />
+          <Box columnGap={2}>
+            <SummaryRow label="Ping" state={state.ping} />
+            <SummaryRow label="HTTP" state={state.http} />
+            <SummaryRow label="Direct" state={state.direct} />
+          </Box>
+          <Newline />
           <Box columnGap={1}>
-            <SignalSection
-              label="Ping"
-              now={Date.now()}
-              state={state.ping}
-              targets={probeTargets.ping}
-            />
-            <SignalSection
-              label="HTTP"
-              now={Date.now()}
-              state={state.http}
-              targets={probeTargets.http}
-            />
+            <SignalSection label="Ping" now={Date.now()} state={state.ping} />
+            <SignalSection label="HTTP" now={Date.now()} state={state.http} />
             <SignalSection
               label="Direct HTTPS"
               now={Date.now()}
               state={state.direct}
-              targets={probeTargets.direct}
             />
           </Box>
           <Newline />
+          <Text color="gray">
+            Targets Ping: {probeTargets.ping.ipv4} | {probeTargets.ping.ipv6}
+          </Text>
+          <Text color="gray">
+            Targets HTTP: {probeTargets.http.ipv4} | {probeTargets.http.ipv6}
+          </Text>
+          <Text color="gray">
+            Targets Direct: {probeTargets.direct.ipv4} |{" "}
+            {probeTargets.direct.ipv6}
+          </Text>
           <Text color="gray">
             Polls each family every {(intervalMs / 1000).toFixed(1)} seconds.
             Press Ctrl+C to exit.

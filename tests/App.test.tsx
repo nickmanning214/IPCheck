@@ -7,7 +7,7 @@ import { App } from "../src/app/App";
 import { ConnectivityService } from "../src/services/connectivity/ConnectivityService";
 
 describe("App", () => {
-  test("renders a compact three-column comparison with side-by-side IPv4 and IPv6 cards", async () => {
+  test("renders a compact comparison with a summary row and footer targets", async () => {
     const app = render(
       <App
         intervalMs={60000}
@@ -87,27 +87,27 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("Ping");
     expect(app.lastFrame()).toContain("HTTP");
     expect(app.lastFrame()).toContain("Direct HTTPS");
+    expect(app.lastFrame()).toContain("Direct");
+    expect(app.lastFrame()).toContain("v4");
+    expect(app.lastFrame()).toContain("v6");
     expect(app.lastFrame()).toContain("IPv4");
     expect(app.lastFrame()).toContain("IPv6");
     expect(app.lastFrame()).toContain("Up: 100.0%");
     expect(app.lastFrame()).toContain("1m: 100.0%");
     expect(app.lastFrame()).toContain("5m: 100.0%");
     expect(app.lastFrame()).toContain("Up: 0.0%");
-    expect(app.lastFrame()).toContain("latency: 10.0");
-    expect(app.lastFrame()).toContain("latency: 120.0");
-    expect(app.lastFrame()).toContain("latency: 80.0");
-    expect(app.lastFrame()).toContain("Last checked");
-    expect(app.lastFrame()).toContain("Ping IPv4 target:");
+    expect(app.lastFrame()).toContain("Lat: 10.0");
+    expect(app.lastFrame()).toContain("Lat: 120.0");
+    expect(app.lastFrame()).toContain("Lat: 80.0");
+    expect(app.lastFrame()).toContain("Checked");
+    expect(app.lastFrame()).toContain("Targets Ping:");
     expect(app.lastFrame()).toContain("8.8.8.8");
-    expect(app.lastFrame()).toContain("Ping IPv6 target:");
     expect(app.lastFrame()).toContain("2001:4860:4860::8844");
-    expect(app.lastFrame()).toContain("HTTP IPv4 target:");
+    expect(app.lastFrame()).toContain("Targets HTTP:");
     expect(app.lastFrame()).toContain("https://api.ipify.org");
-    expect(app.lastFrame()).toContain("HTTP IPv6 target:");
     expect(app.lastFrame()).toContain("https://api64.ipify.org");
-    expect(app.lastFrame()).toContain("Direct HTTPS IPv4 target:");
+    expect(app.lastFrame()).toContain("Targets Direct:");
     expect(app.lastFrame()).toContain("1.1.1.1/cdn-cgi/trace");
-    expect(app.lastFrame()).toContain("Direct HTTPS IPv6 target:");
     expect(app.lastFrame()).toContain("2606:4700:4700::111");
     expect(app.lastFrame()).toContain("Address");
     expect(app.lastFrame()).toContain("203.0.113.10");
