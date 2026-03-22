@@ -5,6 +5,8 @@ import type { ProbeTargets } from "../domain/ProbeTargets";
 import { useFork } from "../hooks/useFork";
 import { ConnectivityService } from "../services/connectivity/ConnectivityService";
 import { readProbeTargets } from "../services/connectivity/readProbeTargets";
+import { formatRunDuration } from "../ui/formatRunDuration";
+import { formatStartedAt } from "../ui/formatStartedAt";
 import { SignalSection } from "../ui/SignalSection";
 import { SummaryRow } from "../ui/SummaryRow";
 import { appReducer } from "./appReducer";
@@ -34,13 +36,18 @@ export const App = ({
         ),
         [intervalMs, connectivityLayer],
       ),
-      (
+      pipe(Date.now(), (now) => (
         <Box flexDirection="column" padding={1}>
           <Text bold color="cyan">
             IPCheck
           </Text>
           <Text color="gray">
             Continuous IPv4 and IPv6 reachability monitor
+          </Text>
+          <Text color="gray">
+            {formatStartedAt({ startedAt: state.startedAt })} | Running{" "}
+            {formatRunDuration({ now, startedAt: state.startedAt })} | Poll
+            every {(intervalMs / 1000).toFixed(1)}s per family
           </Text>
           <Newline />
           <Box columnGap={2}>
@@ -50,11 +57,11 @@ export const App = ({
           </Box>
           <Newline />
           <Box columnGap={1}>
-            <SignalSection label="Ping" now={Date.now()} state={state.ping} />
-            <SignalSection label="HTTP" now={Date.now()} state={state.http} />
+            <SignalSection label="Ping" now={now} state={state.ping} />
+            <SignalSection label="HTTP" now={now} state={state.http} />
             <SignalSection
               label="Direct HTTPS"
-              now={Date.now()}
+              now={now}
               state={state.direct}
             />
           </Box>
@@ -74,6 +81,6 @@ export const App = ({
             Press Ctrl+C to exit.
           </Text>
         </Box>
-      )
+      ))
     ),
   );

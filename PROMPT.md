@@ -16,7 +16,7 @@ This project is a terminal app.
 1. The app continuously monitors IPv4 and IPv6 connectivity in the terminal instead of running a one-shot shell script.
 2. The terminal UI always shows the latest known status for IPv4 and IPv6, including whether each check is currently running, reachable, or failing.
 3. The app refreshes IPv4 and IPv6 checks independently on a repeating interval without exiting on its own.
-4. The UI shows the last completed check time for each family, uptime percentage since the app started, and keeps the terminal view readable during long-running monitoring with a compact comparison layout and a summary-first hierarchy.
+4. The UI shows the last completed check time for each family, uptime percentage since the app started, explicit run timing metadata, and keeps the terminal view readable during long-running monitoring with a compact comparison layout and a summary-first hierarchy.
 5. The connectivity checks should probe IPv4 and IPv6 directly so the app can still report transport failures even when DNS is unavailable.
 6. The monitor should keep the last online or offline status visible while a new probe is in flight instead of replacing everything with a blocking global checking state.
 7. The app should support configurable IPv4 and IPv6 probe targets without requiring code changes.
@@ -34,6 +34,7 @@ This project is a terminal app.
 - Show when a family is actively being polled without hiding its last completed result.
 - Arrange the dashboard as three side-by-side signal columns, with IPv4 and IPv6 shown next to each other inside each signal, so the full comparison fits on one screen.
 - Add a compact summary row above the detailed columns that emphasizes uptime percentages instead of repeating online/offline labels, and keep probe targets in a low-emphasis footer so the main comparison area stays focused on health signals.
+- Show the app start time, elapsed runtime, and polling cadence explicitly so percentages can be interpreted in the context of how much data has been collected.
 
 ### Connectivity Runtime
 

@@ -87,6 +87,9 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("Ping");
     expect(app.lastFrame()).toContain("HTTP");
     expect(app.lastFrame()).toContain("Direct HTTPS");
+    expect(app.lastFrame()).toContain("Started");
+    expect(app.lastFrame()).toContain("Running");
+    expect(app.lastFrame()).toContain("Poll every 60.0s per family");
     expect(app.lastFrame()).toContain("Direct");
     expect(app.lastFrame()).toContain("v4");
     expect(app.lastFrame()).toContain("v6");
