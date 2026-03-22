@@ -24,6 +24,7 @@ This project is a terminal app.
 9. The app should support both raw reachability checks and hostname-based HTTP-style checks so browser-like slowness can be compared against basic network health.
 10. HTTP probes should use bounded timeouts so a wedged web request cannot leave the monitor stuck in a polling state indefinitely.
 11. The app should also support a direct-IP HTTPS probe so raw ping, hostname HTTP, and direct HTTPS can be compared side by side in the same run.
+12. The default polling cadence should be once per second for each family and signal, while still allowing the interval to be configured.
 
 ## Vertical Features
 
@@ -44,6 +45,7 @@ This project is a terminal app.
 - Poll IPv4 and IPv6 independently so one slow family does not block updates for the other.
 - Allow probe targets to be configured from the runtime environment.
 - Support ICMP-style reachability checks, hostname-based HTTP-style checks, and direct-IP HTTPS checks for each family.
+- Default to a one-second polling cadence per family and signal, while allowing overrides from app configuration.
 - Bound HTTP probe duration with explicit timeouts so the UI keeps advancing even during severe slowness.
 
 ### Process Service

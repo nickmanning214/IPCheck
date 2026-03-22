@@ -15,7 +15,7 @@ import { runMonitorLoop } from "./runMonitorLoop";
 import { useEffectReducer } from "./useEffectReducer";
 
 export const App = ({
-  intervalMs = 2000,
+  intervalMs = 1000,
   connectivityLayer,
   probeTargets = readProbeTargets(Bun.env),
 }: {

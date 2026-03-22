@@ -7,7 +7,7 @@ const { readConnectionStatus } = Effect.serviceFunctions(ConnectivityService);
 
 export const runMonitorLoop = ({
   dispatch,
-  intervalMs = 2000,
+  intervalMs = 1000,
 }: {
   readonly dispatch: (action: AppAction) => Effect.Effect<void, never, never>;
   readonly intervalMs?: number;
