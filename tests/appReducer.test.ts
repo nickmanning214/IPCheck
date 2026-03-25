@@ -48,6 +48,8 @@ describe("appReducer", () => {
           successfulChecks: 0,
           totalChecks: 1,
           latencyHistoryMs: [],
+          outageStartedAt: 123,
+          outages: [],
           recentChecks: [
             {
               checkedAt: 123,
@@ -108,6 +110,8 @@ describe("appReducer", () => {
           successfulChecks: 1,
           totalChecks: 1,
           latencyHistoryMs: [20, 30, 40, 50, 60, 70, 80, 90, 100, 12],
+          outageStartedAt: null,
+          outages: [],
           recentChecks: [
             {
               checkedAt: 250_000,
@@ -148,6 +152,8 @@ describe("appReducer", () => {
           successfulChecks: 1,
           totalChecks: 1,
           latencyHistoryMs: [80],
+          outageStartedAt: null,
+          outages: [],
           recentChecks: [
             {
               checkedAt: 500,
@@ -155,6 +161,64 @@ describe("appReducer", () => {
             },
           ],
         },
+      },
+    });
+  });
+
+  test("records completed outages and their lengths when a family recovers", () => {
+    expect(
+      appReducer(
+        {
+          ...initialAppState,
+          http: {
+            ...initialAppState.http,
+            ipv4: {
+              ...initialAppState.http.ipv4,
+              status: "offline",
+              outageStartedAt: 1_000,
+            },
+          },
+        },
+        {
+          _tag: "CheckCompleted",
+          signal: "http",
+          family: "ipv4",
+          checkedAt: 4_000,
+          result: {
+            status: "online",
+            detail: "Address 203.0.113.10",
+            latencyMs: 120,
+          },
+        },
+      ),
+    ).toEqual({
+      ...initialAppState,
+      http: {
+        ...initialAppState.http,
+        ipv4: {
+          status: "online",
+          isChecking: false,
+          detail: "Address 203.0.113.10",
+          lastCheckedAt: 4_000,
+          successfulChecks: 1,
+          totalChecks: 1,
+          latencyHistoryMs: [120],
+          outageStartedAt: null,
+          outages: [
+            {
+              startedAt: 1_000,
+              endedAt: 4_000,
+              durationMs: 3_000,
+            },
+          ],
+          recentChecks: [
+            {
+              checkedAt: 4_000,
+              isSuccess: true,
+            },
+          ],
+        },
+        ipv6: initialAppState.http.ipv6,
       },
     });
   });

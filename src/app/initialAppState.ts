@@ -9,6 +9,8 @@ const initialConnectionState = ({ detail }: { readonly detail: string }) => ({
   totalChecks: 0,
   latencyHistoryMs: [],
   recentChecks: [],
+  outageStartedAt: null,
+  outages: [],
 });
 
 export const makeInitialAppState = ({

@@ -1,3 +1,4 @@
+import type { Outage } from "./Outage";
 import type { RecentCheck } from "./RecentCheck";
 
 export type ConnectionState = {
@@ -9,4 +10,6 @@ export type ConnectionState = {
   readonly totalChecks: number;
   readonly latencyHistoryMs: ReadonlyArray<number>;
   readonly recentChecks: ReadonlyArray<RecentCheck>;
+  readonly outageStartedAt: number | null;
+  readonly outages: ReadonlyArray<Outage>;
 };

@@ -105,6 +105,7 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("Lat: 120.0");
     expect(app.lastFrame()).toContain("Lat: 80.0");
     expect(app.lastFrame()).toContain("Checked");
+    expect(app.lastFrame()).toContain("Outages:");
     expect(app.lastFrame()).toContain("Targets Ping:");
     expect(app.lastFrame()).toContain("8.8.8.8");
     expect(app.lastFrame()).toContain("2001:4860:4860::8844");

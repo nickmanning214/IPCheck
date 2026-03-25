@@ -4,6 +4,7 @@ import { Match, pipe } from "effect";
 import type { ConnectionState } from "../domain/ConnectionState";
 import { formatCheckedAt } from "./formatCheckedAt";
 import { formatLatencyHistory } from "./formatLatencyHistory";
+import { formatOutages } from "./formatOutages";
 import { formatUptimePercentage } from "./formatUptimePercentage";
 import { readRollingWindowUptime } from "./readRollingWindowUptime";
 
@@ -69,5 +70,6 @@ export const ConnectionStatusRow = ({
         .replace("Waiting for the first completed check", "Checked: waiting")
         .replace("Last checked at ", "Checked ")}
     </Text>
+    <Text color="gray">{formatOutages({ now, result })}</Text>
   </Box>
 );

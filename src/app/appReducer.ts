@@ -5,6 +5,7 @@ import type { AppState } from "../domain/AppState";
 
 const latencyHistoryLimit = 10;
 const rollingWindowLimitMs = 5 * 60 * 1000;
+const outageHistoryLimit = 10;
 
 export const appReducer = (state: AppState, action: AppAction) =>
   pipe(
@@ -109,6 +110,23 @@ export const appReducer = (state: AppState, action: AppAction) =>
                 : [...state.ping.ipv4.latencyHistoryMs, result.latencyMs].slice(
                     -latencyHistoryLimit,
                   ),
+            outageStartedAt:
+              result.status === "offline"
+                ? (state.ping.ipv4.outageStartedAt ?? checkedAt)
+                : null,
+            outages:
+              result.status === "online" &&
+              state.ping.ipv4.status === "offline" &&
+              state.ping.ipv4.outageStartedAt !== null
+                ? [
+                    ...state.ping.ipv4.outages,
+                    {
+                      startedAt: state.ping.ipv4.outageStartedAt,
+                      endedAt: checkedAt,
+                      durationMs: checkedAt - state.ping.ipv4.outageStartedAt,
+                    },
+                  ].slice(-outageHistoryLimit)
+                : state.ping.ipv4.outages,
             recentChecks: [
               ...state.ping.ipv4.recentChecks.filter(
                 ({ checkedAt: sampleCheckedAt }) =>
@@ -145,6 +163,23 @@ export const appReducer = (state: AppState, action: AppAction) =>
                 : [...state.ping.ipv6.latencyHistoryMs, result.latencyMs].slice(
                     -latencyHistoryLimit,
                   ),
+            outageStartedAt:
+              result.status === "offline"
+                ? (state.ping.ipv6.outageStartedAt ?? checkedAt)
+                : null,
+            outages:
+              result.status === "online" &&
+              state.ping.ipv6.status === "offline" &&
+              state.ping.ipv6.outageStartedAt !== null
+                ? [
+                    ...state.ping.ipv6.outages,
+                    {
+                      startedAt: state.ping.ipv6.outageStartedAt,
+                      endedAt: checkedAt,
+                      durationMs: checkedAt - state.ping.ipv6.outageStartedAt,
+                    },
+                  ].slice(-outageHistoryLimit)
+                : state.ping.ipv6.outages,
             recentChecks: [
               ...state.ping.ipv6.recentChecks.filter(
                 ({ checkedAt: sampleCheckedAt }) =>
@@ -181,6 +216,23 @@ export const appReducer = (state: AppState, action: AppAction) =>
                 : [...state.http.ipv4.latencyHistoryMs, result.latencyMs].slice(
                     -latencyHistoryLimit,
                   ),
+            outageStartedAt:
+              result.status === "offline"
+                ? (state.http.ipv4.outageStartedAt ?? checkedAt)
+                : null,
+            outages:
+              result.status === "online" &&
+              state.http.ipv4.status === "offline" &&
+              state.http.ipv4.outageStartedAt !== null
+                ? [
+                    ...state.http.ipv4.outages,
+                    {
+                      startedAt: state.http.ipv4.outageStartedAt,
+                      endedAt: checkedAt,
+                      durationMs: checkedAt - state.http.ipv4.outageStartedAt,
+                    },
+                  ].slice(-outageHistoryLimit)
+                : state.http.ipv4.outages,
             recentChecks: [
               ...state.http.ipv4.recentChecks.filter(
                 ({ checkedAt: sampleCheckedAt }) =>
@@ -217,6 +269,23 @@ export const appReducer = (state: AppState, action: AppAction) =>
                 : [...state.http.ipv6.latencyHistoryMs, result.latencyMs].slice(
                     -latencyHistoryLimit,
                   ),
+            outageStartedAt:
+              result.status === "offline"
+                ? (state.http.ipv6.outageStartedAt ?? checkedAt)
+                : null,
+            outages:
+              result.status === "online" &&
+              state.http.ipv6.status === "offline" &&
+              state.http.ipv6.outageStartedAt !== null
+                ? [
+                    ...state.http.ipv6.outages,
+                    {
+                      startedAt: state.http.ipv6.outageStartedAt,
+                      endedAt: checkedAt,
+                      durationMs: checkedAt - state.http.ipv6.outageStartedAt,
+                    },
+                  ].slice(-outageHistoryLimit)
+                : state.http.ipv6.outages,
             recentChecks: [
               ...state.http.ipv6.recentChecks.filter(
                 ({ checkedAt: sampleCheckedAt }) =>
@@ -254,6 +323,23 @@ export const appReducer = (state: AppState, action: AppAction) =>
                     ...state.direct.ipv4.latencyHistoryMs,
                     result.latencyMs,
                   ].slice(-latencyHistoryLimit),
+            outageStartedAt:
+              result.status === "offline"
+                ? (state.direct.ipv4.outageStartedAt ?? checkedAt)
+                : null,
+            outages:
+              result.status === "online" &&
+              state.direct.ipv4.status === "offline" &&
+              state.direct.ipv4.outageStartedAt !== null
+                ? [
+                    ...state.direct.ipv4.outages,
+                    {
+                      startedAt: state.direct.ipv4.outageStartedAt,
+                      endedAt: checkedAt,
+                      durationMs: checkedAt - state.direct.ipv4.outageStartedAt,
+                    },
+                  ].slice(-outageHistoryLimit)
+                : state.direct.ipv4.outages,
             recentChecks: [
               ...state.direct.ipv4.recentChecks.filter(
                 ({ checkedAt: sampleCheckedAt }) =>
@@ -291,6 +377,23 @@ export const appReducer = (state: AppState, action: AppAction) =>
                     ...state.direct.ipv6.latencyHistoryMs,
                     result.latencyMs,
                   ].slice(-latencyHistoryLimit),
+            outageStartedAt:
+              result.status === "offline"
+                ? (state.direct.ipv6.outageStartedAt ?? checkedAt)
+                : null,
+            outages:
+              result.status === "online" &&
+              state.direct.ipv6.status === "offline" &&
+              state.direct.ipv6.outageStartedAt !== null
+                ? [
+                    ...state.direct.ipv6.outages,
+                    {
+                      startedAt: state.direct.ipv6.outageStartedAt,
+                      endedAt: checkedAt,
+                      durationMs: checkedAt - state.direct.ipv6.outageStartedAt,
+                    },
+                  ].slice(-outageHistoryLimit)
+                : state.direct.ipv6.outages,
             recentChecks: [
               ...state.direct.ipv6.recentChecks.filter(
                 ({ checkedAt: sampleCheckedAt }) =>
