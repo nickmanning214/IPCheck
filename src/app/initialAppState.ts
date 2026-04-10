@@ -44,6 +44,14 @@ export const makeInitialAppState = ({
         detail: "Waiting for the first IPv6 direct HTTPS check",
       }),
     },
+    sites: {
+      plaintextsports: initialConnectionState({
+        detail: "Waiting for the first Plaintext Sports site check",
+      }),
+      slack: initialConnectionState({
+        detail: "Waiting for the first Slack site check",
+      }),
+    },
   }) satisfies AppState;
 
 export const initialAppState = makeInitialAppState({ startedAt: 0 });

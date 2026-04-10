@@ -16,4 +16,9 @@ export const readProbeTargets = (env: Record<string, string | undefined>) =>
         env.IPCHECK_DIRECT_IPV6_TARGET ||
         "https://[2606:4700:4700::1111]/cdn-cgi/trace",
     },
+    sites: {
+      plaintextsports:
+        env.IPCHECK_SITE_PLAINTEXTSPORTS_URL || "https://plaintextsports.com",
+      slack: env.IPCHECK_SITE_SLACK_URL || "https://slack.com",
+    },
   }) satisfies ProbeTargets;

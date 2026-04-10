@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { readProbeTargets } from "../src/services/connectivity/readProbeTargets";
 
 describe("readProbeTargets", () => {
-  test("falls back to default ping and http targets", () => {
+  test("falls back to default reference and site targets", () => {
     expect(readProbeTargets({})).toEqual({
       ping: {
         ipv4: "1.1.1.1",
@@ -17,6 +17,10 @@ describe("readProbeTargets", () => {
         ipv4: "https://1.1.1.1/cdn-cgi/trace",
         ipv6: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
       },
+      sites: {
+        plaintextsports: "https://plaintextsports.com",
+        slack: "https://slack.com",
+      },
     });
   });
 
@@ -29,6 +33,8 @@ describe("readProbeTargets", () => {
         IPCHECK_HTTP_IPV6_TARGET: "https://example.com/ipv6",
         IPCHECK_DIRECT_IPV4_TARGET: "https://198.51.100.4/direct",
         IPCHECK_DIRECT_IPV6_TARGET: "https://[2001:db8::4]/direct",
+        IPCHECK_SITE_PLAINTEXTSPORTS_URL: "https://pts.example.com",
+        IPCHECK_SITE_SLACK_URL: "https://slack.example.com",
       }),
     ).toEqual({
       ping: {
@@ -42,6 +48,10 @@ describe("readProbeTargets", () => {
       direct: {
         ipv4: "https://198.51.100.4/direct",
         ipv6: "https://[2001:db8::4]/direct",
+      },
+      sites: {
+        plaintextsports: "https://pts.example.com",
+        slack: "https://slack.example.com",
       },
     });
   });

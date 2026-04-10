@@ -7,8 +7,10 @@ import { ConnectivityService } from "../services/connectivity/ConnectivityServic
 import { readProbeTargets } from "../services/connectivity/readProbeTargets";
 import { formatRunDuration } from "../ui/formatRunDuration";
 import { formatStartedAt } from "../ui/formatStartedAt";
+import { SiteSection } from "../ui/SiteSection";
 import { SignalSection } from "../ui/SignalSection";
 import { SummaryRow } from "../ui/SummaryRow";
+import { SitesSummaryRow } from "../ui/SitesSummaryRow";
 import { appReducer } from "./appReducer";
 import { makeInitialAppState } from "./initialAppState";
 import { runMonitorLoop } from "./runMonitorLoop";
@@ -54,6 +56,7 @@ export const App = ({
             <SummaryRow label="Ping" state={state.ping} />
             <SummaryRow label="HTTP" state={state.http} />
             <SummaryRow label="Direct" state={state.direct} />
+            <SitesSummaryRow state={state.sites} />
           </Box>
           <Newline />
           <Box columnGap={1}>
@@ -66,6 +69,12 @@ export const App = ({
             />
           </Box>
           <Newline />
+          <SiteSection
+            now={now}
+            state={state.sites}
+            targets={probeTargets.sites}
+          />
+          <Newline />
           <Text color="gray">
             Targets Ping: {probeTargets.ping.ipv4} | {probeTargets.ping.ipv6}
           </Text>
@@ -75,6 +84,10 @@ export const App = ({
           <Text color="gray">
             Targets Direct: {probeTargets.direct.ipv4} |{" "}
             {probeTargets.direct.ipv6}
+          </Text>
+          <Text color="gray">
+            Sites: {probeTargets.sites.plaintextsports} |{" "}
+            {probeTargets.sites.slack}
           </Text>
           <Text color="gray">
             Polls each family every {(intervalMs / 1000).toFixed(1)} seconds.

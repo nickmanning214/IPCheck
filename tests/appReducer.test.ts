@@ -59,6 +59,7 @@ describe("appReducer", () => {
         },
       },
       direct: initialAppState.direct,
+      sites: initialAppState.sites,
       startedAt: 0,
     });
   });
@@ -157,6 +158,43 @@ describe("appReducer", () => {
           recentChecks: [
             {
               checkedAt: 500,
+              isSuccess: true,
+            },
+          ],
+        },
+      },
+    });
+  });
+
+  test("updates browser-default site checks independently from reference probes", () => {
+    expect(
+      appReducer(initialAppState, {
+        _tag: "SiteCheckCompleted",
+        site: "plaintextsports",
+        checkedAt: 700,
+        result: {
+          status: "online",
+          detail: "HTTP 200 in 95.0 ms",
+          latencyMs: 95,
+        },
+      }),
+    ).toEqual({
+      ...initialAppState,
+      sites: {
+        ...initialAppState.sites,
+        plaintextsports: {
+          status: "online",
+          isChecking: false,
+          detail: "HTTP 200 in 95.0 ms",
+          lastCheckedAt: 700,
+          successfulChecks: 1,
+          totalChecks: 1,
+          latencyHistoryMs: [95],
+          outageStartedAt: null,
+          outages: [],
+          recentChecks: [
+            {
+              checkedAt: 700,
               isSuccess: true,
             },
           ],

@@ -24,6 +24,10 @@ describe("App", () => {
             ipv4: "https://1.1.1.1/cdn-cgi/trace",
             ipv6: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
           },
+          sites: {
+            plaintextsports: "https://plaintextsports.com",
+            slack: "https://slack.com",
+          },
         }}
         connectivityLayer={Layer.succeed(ConnectivityService, {
           targets: {
@@ -38,6 +42,10 @@ describe("App", () => {
             direct: {
               ipv4: "https://1.1.1.1/cdn-cgi/trace",
               ipv6: "https://[2606:4700:4700::1111]/cdn-cgi/trace",
+            },
+            sites: {
+              plaintextsports: "https://plaintextsports.com",
+              slack: "https://slack.com",
             },
           },
           readConnectionStatus: ({ family, signal }) =>
@@ -78,6 +86,20 @@ describe("App", () => {
                             latencyMs: null,
                           },
             ),
+          readSiteStatus: ({ site }) =>
+            Effect.succeed(
+              site === "plaintextsports"
+                ? {
+                    status: "online",
+                    detail: "HTTP 200 in 95.0 ms",
+                    latencyMs: 95,
+                  }
+                : {
+                    status: "offline",
+                    detail: "Site probe failed",
+                    latencyMs: null,
+                  },
+            ),
         })}
       />,
     );
@@ -91,6 +113,7 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("Running");
     expect(app.lastFrame()).toContain("Poll every 60.0s per family");
     expect(app.lastFrame()).toContain("Direct");
+    expect(app.lastFrame()).toContain("Sites");
     expect(app.lastFrame()).toContain("v4");
     expect(app.lastFrame()).toContain("v6");
     expect(app.lastFrame()).toContain("v4 100.0%");
@@ -104,6 +127,7 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("Lat: 10.0");
     expect(app.lastFrame()).toContain("Lat: 120.0");
     expect(app.lastFrame()).toContain("Lat: 80.0");
+    expect(app.lastFrame()).toContain("Lat: 95.0");
     expect(app.lastFrame()).toContain("Checked");
     expect(app.lastFrame()).toContain("Outages:");
     expect(app.lastFrame()).toContain("Targets Ping:");
@@ -115,6 +139,11 @@ describe("App", () => {
     expect(app.lastFrame()).toContain("Targets Direct:");
     expect(app.lastFrame()).toContain("1.1.1.1/cdn-cgi/trace");
     expect(app.lastFrame()).toContain("2606:4700:4700::111");
+    expect(app.lastFrame()).toContain("Sites:");
+    expect(app.lastFrame()).toContain("https://plaintextsports.com");
+    expect(app.lastFrame()).toContain("https://slack.com");
+    expect(app.lastFrame()).toContain("Plaintext Sports");
+    expect(app.lastFrame()).toContain("Slack");
     expect(app.lastFrame()).toContain("Address");
     expect(app.lastFrame()).toContain("203.0.113.10");
     expect(app.lastFrame()).toContain("Response");

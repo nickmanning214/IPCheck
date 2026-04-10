@@ -24,8 +24,8 @@ export const ConnectionStatusRow = ({
       {pipe(
         Match.value(result.status),
         Match.when("unknown", () => <Text color="yellow">UNKNOWN</Text>),
-        Match.when("online", () => <Text color="green">ONLINE</Text>),
-        Match.when("offline", () => <Text color="red">OFFLINE</Text>),
+        Match.when("online", () => <Text color="green">OK</Text>),
+        Match.when("offline", () => <Text color="red">FAILED</Text>),
         Match.exhaustive,
       )}
       {pipe(
