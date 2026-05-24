@@ -88,6 +88,26 @@ export const appReducer = (state: AppState, action: AppAction) =>
         },
       }),
     ),
+    Match.when({ _tag: "SiteCheckStarted", site: "plaintextsports" }, () => ({
+      ...state,
+      sites: {
+        ...state.sites,
+        plaintextsports: {
+          ...state.sites.plaintextsports,
+          isChecking: true,
+        },
+      },
+    })),
+    Match.when({ _tag: "SiteCheckStarted", site: "slack" }, () => ({
+      ...state,
+      sites: {
+        ...state.sites,
+        slack: {
+          ...state.sites.slack,
+          isChecking: true,
+        },
+      },
+    })),
     Match.when(
       { _tag: "CheckCompleted", signal: "ping", family: "ipv4" },
       ({ checkedAt, result }) => ({
@@ -396,6 +416,115 @@ export const appReducer = (state: AppState, action: AppAction) =>
                 : state.direct.ipv6.outages,
             recentChecks: [
               ...state.direct.ipv6.recentChecks.filter(
+                ({ checkedAt: sampleCheckedAt }) =>
+                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+              ),
+              {
+                checkedAt,
+                isSuccess: result.status === "online",
+              },
+            ],
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "SiteCheckCompleted", site: "plaintextsports" },
+      ({ checkedAt, result }) => ({
+        ...state,
+        sites: {
+          ...state.sites,
+          plaintextsports: {
+            ...state.sites.plaintextsports,
+            status: result.status,
+            isChecking: false,
+            detail: result.detail,
+            lastCheckedAt: checkedAt,
+            successfulChecks:
+              state.sites.plaintextsports.successfulChecks +
+              (result.status === "online" ? 1 : 0),
+            totalChecks: state.sites.plaintextsports.totalChecks + 1,
+            latencyHistoryMs:
+              result.latencyMs === null
+                ? state.sites.plaintextsports.latencyHistoryMs
+                : [
+                    ...state.sites.plaintextsports.latencyHistoryMs,
+                    result.latencyMs,
+                  ].slice(-latencyHistoryLimit),
+            outageStartedAt:
+              result.status === "offline"
+                ? (state.sites.plaintextsports.outageStartedAt ?? checkedAt)
+                : null,
+            outages:
+              result.status === "online" &&
+              state.sites.plaintextsports.status === "offline" &&
+              state.sites.plaintextsports.outageStartedAt !== null
+                ? [
+                    ...state.sites.plaintextsports.outages,
+                    {
+                      startedAt: state.sites.plaintextsports.outageStartedAt,
+                      endedAt: checkedAt,
+                      durationMs:
+                        checkedAt - state.sites.plaintextsports.outageStartedAt,
+                    },
+                  ].slice(-outageHistoryLimit)
+                : state.sites.plaintextsports.outages,
+            recentChecks: [
+              ...state.sites.plaintextsports.recentChecks.filter(
+                ({ checkedAt: sampleCheckedAt }) =>
+                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+              ),
+              {
+                checkedAt,
+                isSuccess: result.status === "online",
+              },
+            ],
+          },
+        },
+      }),
+    ),
+    Match.when(
+      { _tag: "SiteCheckCompleted", site: "slack" },
+      ({ checkedAt, result }) => ({
+        ...state,
+        sites: {
+          ...state.sites,
+          slack: {
+            ...state.sites.slack,
+            status: result.status,
+            isChecking: false,
+            detail: result.detail,
+            lastCheckedAt: checkedAt,
+            successfulChecks:
+              state.sites.slack.successfulChecks +
+              (result.status === "online" ? 1 : 0),
+            totalChecks: state.sites.slack.totalChecks + 1,
+            latencyHistoryMs:
+              result.latencyMs === null
+                ? state.sites.slack.latencyHistoryMs
+                : [
+                    ...state.sites.slack.latencyHistoryMs,
+                    result.latencyMs,
+                  ].slice(-latencyHistoryLimit),
+            outageStartedAt:
+              result.status === "offline"
+                ? (state.sites.slack.outageStartedAt ?? checkedAt)
+                : null,
+            outages:
+              result.status === "online" &&
+              state.sites.slack.status === "offline" &&
+              state.sites.slack.outageStartedAt !== null
+                ? [
+                    ...state.sites.slack.outages,
+                    {
+                      startedAt: state.sites.slack.outageStartedAt,
+                      endedAt: checkedAt,
+                      durationMs: checkedAt - state.sites.slack.outageStartedAt,
+                    },
+                  ].slice(-outageHistoryLimit)
+                : state.sites.slack.outages,
+            recentChecks: [
+              ...state.sites.slack.recentChecks.filter(
                 ({ checkedAt: sampleCheckedAt }) =>
                   sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
               ),
