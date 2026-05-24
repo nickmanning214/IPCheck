@@ -6,6 +6,7 @@ import type { Signal } from "../../domain/Signal";
 import { ProcessService } from "../process/ProcessService";
 import { pickFailureDetail } from "./pickFailureDetail";
 import { pickSuccessDetail } from "./pickSuccessDetail";
+import { readCurlProbeResult } from "./readCurlProbeResult";
 import { readLatencyMs } from "./readLatencyMs";
 
 const { run } = Effect.serviceFunctions(ProcessService);
@@ -63,6 +64,8 @@ export const readConnectionStatus = ({
             command: "curl",
             args: [
               "-4",
+              "--noproxy",
+              "*",
               "--silent",
               "--show-error",
               "--connect-timeout",
@@ -70,7 +73,7 @@ export const readConnectionStatus = ({
               "--max-time",
               "5",
               "--write-out",
-              "\n%{http_code} %{time_total}",
+              "\n%{http_code} %{time_total} %{remote_ip}",
               target,
             ],
           }),
@@ -80,6 +83,8 @@ export const readConnectionStatus = ({
             command: "curl",
             args: [
               "-6",
+              "--noproxy",
+              "*",
               "--silent",
               "--show-error",
               "--connect-timeout",
@@ -87,7 +92,7 @@ export const readConnectionStatus = ({
               "--max-time",
               "5",
               "--write-out",
-              "\n%{http_code} %{time_total}",
+              "\n%{http_code} %{time_total} %{remote_ip}",
               target,
             ],
           }),
@@ -96,37 +101,12 @@ export const readConnectionStatus = ({
         Effect.flatMap(({ exitCode, stdout, stderr }) =>
           Effect.if(exitCode === 0, {
             onTrue: () =>
-              pipe(
-                stdout.trim().split("\n"),
-                (lines) => ({
-                  body: lines.slice(0, -1).join("\n").trim(),
-                  metrics: lines.at(-1) || "",
+              Effect.succeed(
+                readCurlProbeResult({
+                  family,
+                  successPrefix: "Address",
+                  stdout,
                 }),
-                ({ body, metrics }) =>
-                  pipe(
-                    metrics.match(/^(\d{3})\s+([0-9.]+)$/),
-                    Match.value,
-                    Match.when(null, () =>
-                      Effect.succeed<CheckResult>({
-                        status: "online",
-                        detail:
-                          body.length > 0
-                            ? `Address ${body}`
-                            : "HTTP reachable",
-                        latencyMs: null,
-                      }),
-                    ),
-                    Match.orElse((match) =>
-                      Effect.succeed<CheckResult>({
-                        status: "online",
-                        detail:
-                          body.length > 0
-                            ? `Address ${body}`
-                            : `HTTP ${match[1]} in ${(Number(match[2]) * 1000).toFixed(1)} ms`,
-                        latencyMs: Number(match[2]) * 1000,
-                      }),
-                    ),
-                  ),
               ),
             onFalse: () =>
               Effect.succeed<CheckResult>({
@@ -146,6 +126,8 @@ export const readConnectionStatus = ({
             command: "curl",
             args: [
               "-4",
+              "--noproxy",
+              "*",
               "--silent",
               "--show-error",
               "--insecure",
@@ -154,7 +136,7 @@ export const readConnectionStatus = ({
               "--max-time",
               "5",
               "--write-out",
-              "\n%{http_code} %{time_total}",
+              "\n%{http_code} %{time_total} %{remote_ip}",
               target,
             ],
           }),
@@ -164,6 +146,8 @@ export const readConnectionStatus = ({
             command: "curl",
             args: [
               "-6",
+              "--noproxy",
+              "*",
               "--silent",
               "--show-error",
               "--insecure",
@@ -172,7 +156,7 @@ export const readConnectionStatus = ({
               "--max-time",
               "5",
               "--write-out",
-              "\n%{http_code} %{time_total}",
+              "\n%{http_code} %{time_total} %{remote_ip}",
               target,
             ],
           }),
@@ -181,37 +165,12 @@ export const readConnectionStatus = ({
         Effect.flatMap(({ exitCode, stdout, stderr }) =>
           Effect.if(exitCode === 0, {
             onTrue: () =>
-              pipe(
-                stdout.trim().split("\n"),
-                (lines) => ({
-                  body: lines.slice(0, -1).join("\n").trim(),
-                  metrics: lines.at(-1) || "",
+              Effect.succeed(
+                readCurlProbeResult({
+                  family,
+                  successPrefix: "Response",
+                  stdout,
                 }),
-                ({ body, metrics }) =>
-                  pipe(
-                    metrics.match(/^(\d{3})\s+([0-9.]+)$/),
-                    Match.value,
-                    Match.when(null, () =>
-                      Effect.succeed<CheckResult>({
-                        status: "online",
-                        detail:
-                          body.length > 0
-                            ? `Response ${body}`
-                            : "HTTPS reachable",
-                        latencyMs: null,
-                      }),
-                    ),
-                    Match.orElse((match) =>
-                      Effect.succeed<CheckResult>({
-                        status: "online",
-                        detail:
-                          body.length > 0
-                            ? `Response ${body}`
-                            : `HTTPS ${match[1]} in ${(Number(match[2]) * 1000).toFixed(1)} ms`,
-                        latencyMs: Number(match[2]) * 1000,
-                      }),
-                    ),
-                  ),
               ),
             onFalse: () =>
               Effect.succeed<CheckResult>({

@@ -21,9 +21,9 @@ This project is a terminal app.
 6. The monitor should keep the last online or offline status visible while a new probe is in flight instead of replacing everything with a blocking global checking state.
 7. The app should support configurable IPv4 and IPv6 probe targets without requiring code changes.
 8. The UI should show recent latency history and rolling 1-minute and 5-minute uptime windows for each family.
-9. The app should support both raw reachability checks and hostname-based HTTP-style checks so browser-like slowness can be compared against basic network health.
+9. The app should support both raw reachability checks and hostname-based HTTP-style checks so browser-like slowness can be compared against basic network health, while verifying that forced IPv4 and IPv6 HTTP probes really connected over the requested address family.
 10. HTTP probes should use bounded timeouts so a wedged web request cannot leave the monitor stuck in a polling state indefinitely.
-11. The app should also support a direct-IP HTTPS probe so raw ping, hostname HTTP, and direct HTTPS can be compared side by side in the same run.
+11. The app should also support a direct-IP HTTPS probe so raw ping, hostname HTTP, and direct HTTPS can be compared side by side in the same run, with IPv4-mapped IPv6 endpoints treated as failed native IPv6 probes.
 12. The default polling cadence should be once per second for each family and signal, while still allowing the interval to be configured.
 13. The app should log each detected outage per family and signal, including how long the outage lasted, and surface recent outage history in the terminal UI.
 14. The app should distinguish between forced protocol-path probe failures and browser-default website availability by checking real sites like Plaintext Sports and Slack as first-class browser-default probes.
@@ -39,7 +39,7 @@ This project is a terminal app.
 - Arrange the dashboard as three side-by-side signal columns, with IPv4 and IPv6 shown next to each other inside each signal, so the full comparison fits on one screen.
 - Add a compact summary row above the detailed columns that emphasizes uptime percentages instead of repeating online/offline labels, and keep probe targets in a low-emphasis footer so the main comparison area stays focused on health signals.
 - Show the app start time, elapsed runtime, and polling cadence explicitly so percentages can be interpreted in the context of how much data has been collected.
-- Present reference probes as probe health rather than a definitive internet-up/internet-down claim, and surface browser-default site probes separately so false negatives are easier to spot.
+- Present reference probes as probe health rather than a definitive internet-up/internet-down claim, and surface browser-default site probes separately with the actual remote address family so false negatives are easier to spot.
 
 ### Connectivity Runtime
 
@@ -49,7 +49,9 @@ This project is a terminal app.
 - Poll IPv4 and IPv6 independently so one slow family does not block updates for the other.
 - Allow probe targets to be configured from the runtime environment.
 - Support ICMP-style reachability checks, hostname-based HTTP-style checks, and direct-IP HTTPS checks for each family.
+- Include curl's actual remote address in HTTP-style probe interpretation so native IPv6, native IPv4, and IPv4-mapped IPv6 paths are distinguishable.
 - Support browser-default site probes for known sites alongside the forced protocol-path checks.
+- Include curl's actual remote address in browser-default site probes so working websites can be tied to IPv4, IPv6, or IPv4-mapped paths.
 - Default to a one-second polling cadence per family and signal, while allowing overrides from app configuration.
 - Bound HTTP probe duration with explicit timeouts so the UI keeps advancing even during severe slowness.
 
@@ -65,5 +67,5 @@ This project is a terminal app.
 - Track per-family uptime percentage from app start based on completed probes.
 - Track per-family rolling uptime windows and recent latency history from completed probes.
 - Track completed outages and their measured durations per family and signal.
-- Let users compare raw network health against both browser-like hostname HTTP health and direct-IP HTTPS health in the same run.
+- Let users compare raw network health against both browser-like hostname HTTP health and direct-IP HTTPS health in the same run, without counting IPv4-mapped IPv6 connections as healthy native IPv6.
 - Let users compare forced-path reference probes against browser-default real-site checks in the same run.

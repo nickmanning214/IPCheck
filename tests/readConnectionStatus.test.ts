@@ -101,7 +101,7 @@ describe("readConnectionStatus", () => {
                   args.includes("https://api.ipify.org")
                   ? {
                       exitCode: 0,
-                      stdout: "203.0.113.10\n200 0.120",
+                      stdout: "203.0.113.10\n200 0.120 203.0.113.10",
                       stderr: "",
                     }
                   : {
@@ -115,8 +115,48 @@ describe("readConnectionStatus", () => {
       ),
     ).toEqual({
       status: "online",
-      detail: "Address 203.0.113.10",
+      detail: "Address 203.0.113.10 via IPv4 203.0.113.10",
       latencyMs: 120,
+    });
+  });
+
+  test("fails a forced IPv6 HTTP probe that only reaches an IPv4-mapped endpoint", async () => {
+    expect(
+      await Effect.runPromise(
+        Effect.provideService(
+          readConnectionStatus({
+            family: "ipv6",
+            signal: "http",
+            target: "https://api64.ipify.org",
+          }),
+          ProcessService,
+          {
+            run: ({ command, args }) =>
+              Effect.succeed(
+                command === "curl" &&
+                  args.includes("-6") &&
+                  args.includes("--noproxy") &&
+                  args.includes("*") &&
+                  args.includes("https://api64.ipify.org")
+                  ? {
+                      exitCode: 0,
+                      stdout: "23.25.217.174\n200 0.210 ::ffff:104.237.62.213",
+                      stderr: "",
+                    }
+                  : {
+                      exitCode: 1,
+                      stdout: "",
+                      stderr: "wrong command",
+                    },
+              ),
+          },
+        ),
+      ),
+    ).toEqual({
+      status: "offline",
+      detail:
+        "Expected native IPv6 but curl connected through IPv4-mapped ::ffff:104.237.62.213",
+      latencyMs: null,
     });
   });
 
@@ -139,7 +179,7 @@ describe("readConnectionStatus", () => {
                   args.includes("https://[2606:4700:4700::1111]/cdn-cgi/trace")
                   ? {
                       exitCode: 0,
-                      stdout: "ip=2001:db8::10\n200 0.450",
+                      stdout: "ip=2001:db8::10\n200 0.450 2606:4700:4700::1111",
                       stderr: "",
                     }
                   : {
@@ -153,7 +193,7 @@ describe("readConnectionStatus", () => {
       ),
     ).toEqual({
       status: "online",
-      detail: "Response ip=2001:db8::10",
+      detail: "Response ip=2001:db8::10 via IPv6 2606:4700:4700::1111",
       latencyMs: 450,
     });
   });

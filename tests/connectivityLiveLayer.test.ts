@@ -41,4 +41,42 @@ describe("connectivityLiveLayer", () => {
       latencyMs: null,
     });
   });
+
+  test("reports the address family used by browser-default site probes", async () => {
+    expect(
+      await Effect.runPromise(
+        Effect.provide(
+          Effect.flatMap(ConnectivityService, ({ readSiteStatus }) =>
+            readSiteStatus({ site: "slack" }),
+          ),
+          pipe(
+            ConnectivityService.Live,
+            Layer.provide(
+              Layer.succeed(ProcessService, {
+                run: ({ args }) =>
+                  Effect.succeed(
+                    args.includes("https://slack.com") &&
+                      args.includes("%{http_code} %{time_total} %{remote_ip}")
+                      ? {
+                          exitCode: 0,
+                          stdout: "200 0.320 203.0.113.20",
+                          stderr: "",
+                        }
+                      : {
+                          exitCode: 1,
+                          stdout: "",
+                          stderr: "wrong command",
+                        },
+                  ),
+              }),
+            ),
+          ),
+        ),
+      ),
+    ).toEqual({
+      status: "online",
+      detail: "HTTP 200 via IPv4 203.0.113.20 in 320.0 ms",
+      latencyMs: 320,
+    });
+  });
 });

@@ -8,6 +8,7 @@ import type { SiteKey } from "../../domain/SiteKey";
 import type { Signal } from "../../domain/Signal";
 import { ProcessService } from "../process/ProcessService";
 import { readConnectionStatus } from "./readConnectionStatus";
+import { readCurlSiteResult } from "./readCurlSiteResult";
 import { readProbeTargets } from "./readProbeTargets";
 
 export class ConnectivityService extends Context.Tag("ConnectivityService")<
@@ -58,26 +59,13 @@ export class ConnectivityService extends Context.Tag("ConnectivityService")<
                 "--max-time",
                 "5",
                 "--write-out",
-                "%{http_code} %{time_total}",
+                "%{http_code} %{time_total} %{remote_ip}",
                 readProbeTargets(Bun.env).sites[site],
               ],
             }),
             Effect.flatMap(({ exitCode, stdout, stderr }) =>
               Effect.if(exitCode === 0, {
-                onTrue: () =>
-                  pipe(
-                    stdout.trim().match(/^(\d{3})\s+([0-9.]+)$/),
-                    (match) => ({
-                      status: "online" as const,
-                      detail:
-                        match === null
-                          ? "Site reachable"
-                          : `HTTP ${match[1]} in ${(Number(match[2]) * 1000).toFixed(1)} ms`,
-                      latencyMs:
-                        match === null ? null : Number(match[2]) * 1000,
-                    }),
-                    Effect.succeed,
-                  ),
+                onTrue: () => Effect.succeed(readCurlSiteResult({ stdout })),
                 onFalse: () =>
                   Effect.succeed({
                     status: "offline" as const,
