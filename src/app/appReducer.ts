@@ -1,540 +1,204 @@
-import { Match, pipe } from "effect";
+import { Match, Optic, pipe } from "effect";
 
 import type { AppAction } from "../domain/AppAction";
 import type { AppState } from "../domain/AppState";
+import type { CheckResult } from "../domain/CheckResult";
+import type { ConnectionState } from "../domain/ConnectionState";
+import type { Family } from "../domain/Family";
+import type { Signal } from "../domain/Signal";
+import type { SiteKey } from "../domain/SiteKey";
 
 const latencyHistoryLimit = 10;
 const rollingWindowLimitMs = 5 * 60 * 1000;
 const outageHistoryLimit = 10;
 
+const connectionStateLens = ({
+  family,
+  signal,
+}: {
+  readonly family: Family;
+  readonly signal: Signal;
+}) => Optic.id<AppState>().key(signal).key(family);
+
+const siteStateLens = ({ site }: { readonly site: SiteKey }) =>
+  Optic.id<AppState>().key("sites").key(site);
+
+const updateConnectionState = ({
+  family,
+  signal,
+  state,
+  update,
+}: {
+  readonly family: Family;
+  readonly signal: Signal;
+  readonly state: AppState;
+  readonly update: (connection: ConnectionState) => ConnectionState;
+}) => connectionStateLens({ family, signal }).modify(update)(state);
+
+const updateSiteState = ({
+  site,
+  state,
+  update,
+}: {
+  readonly site: SiteKey;
+  readonly state: AppState;
+  readonly update: (connection: ConnectionState) => ConnectionState;
+}) => siteStateLens({ site }).modify(update)(state);
+
+const readSuccessfulChecks = ({
+  connection,
+  result,
+}: {
+  readonly connection: ConnectionState;
+  readonly result: CheckResult;
+}) =>
+  pipe(
+    Match.value(result.status),
+    Match.when("online", () => connection.successfulChecks + 1),
+    Match.when("offline", () => connection.successfulChecks),
+    Match.exhaustive,
+  );
+
+const readLatencyHistoryMs = ({
+  connection,
+  result,
+}: {
+  readonly connection: ConnectionState;
+  readonly result: CheckResult;
+}) =>
+  result.latencyMs === null
+    ? connection.latencyHistoryMs
+    : connection.latencyHistoryMs
+        .concat(result.latencyMs)
+        .slice(-latencyHistoryLimit);
+
+const readOutageStartedAt = ({
+  checkedAt,
+  connection,
+  result,
+}: {
+  readonly checkedAt: number;
+  readonly connection: ConnectionState;
+  readonly result: CheckResult;
+}) =>
+  pipe(
+    Match.value(result.status),
+    Match.when("offline", () =>
+      connection.outageStartedAt === null
+        ? checkedAt
+        : connection.outageStartedAt,
+    ),
+    Match.when("online", () => null),
+    Match.exhaustive,
+  );
+
+const readOutages = ({
+  checkedAt,
+  connection,
+  result,
+}: {
+  readonly checkedAt: number;
+  readonly connection: ConnectionState;
+  readonly result: CheckResult;
+}) =>
+  result.status === "online" &&
+  connection.status === "offline" &&
+  connection.outageStartedAt !== null
+    ? connection.outages
+        .concat({
+          startedAt: connection.outageStartedAt,
+          endedAt: checkedAt,
+          durationMs: checkedAt - connection.outageStartedAt,
+        })
+        .slice(-outageHistoryLimit)
+    : connection.outages;
+
+const readRecentChecks = ({
+  checkedAt,
+  result,
+  connection,
+}: {
+  readonly checkedAt: number;
+  readonly result: CheckResult;
+  readonly connection: ConnectionState;
+}) =>
+  connection.recentChecks
+    .filter(
+      ({ checkedAt: sampleCheckedAt }) =>
+        sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
+    )
+    .concat({
+      checkedAt,
+      isSuccess: result.status === "online",
+    });
+
+const markConnectionChecking = (connection: ConnectionState) => ({
+  status: connection.status,
+  isChecking: true,
+  detail: connection.detail,
+  lastCheckedAt: connection.lastCheckedAt,
+  successfulChecks: connection.successfulChecks,
+  totalChecks: connection.totalChecks,
+  latencyHistoryMs: connection.latencyHistoryMs,
+  recentChecks: connection.recentChecks,
+  outageStartedAt: connection.outageStartedAt,
+  outages: connection.outages,
+});
+
+const completeConnectionCheck =
+  ({
+    checkedAt,
+    result,
+  }: {
+    readonly checkedAt: number;
+    readonly result: CheckResult;
+  }) =>
+  (connection: ConnectionState) => ({
+    status: result.status,
+    isChecking: false,
+    detail: result.detail,
+    lastCheckedAt: checkedAt,
+    successfulChecks: readSuccessfulChecks({ connection, result }),
+    totalChecks: connection.totalChecks + 1,
+    latencyHistoryMs: readLatencyHistoryMs({ connection, result }),
+    recentChecks: readRecentChecks({ checkedAt, connection, result }),
+    outageStartedAt: readOutageStartedAt({ checkedAt, connection, result }),
+    outages: readOutages({ checkedAt, connection, result }),
+  });
+
 export const appReducer = (state: AppState, action: AppAction) =>
   pipe(
     Match.value(action),
-    Match.when(
-      { _tag: "CheckStarted", signal: "ping", family: "ipv4" },
-      () => ({
-        ...state,
-        ping: {
-          ...state.ping,
-          ipv4: {
-            ...state.ping.ipv4,
-            isChecking: true,
-          },
-        },
+    Match.when({ _tag: "CheckStarted" }, ({ family, signal }) =>
+      updateConnectionState({
+        family,
+        signal,
+        state,
+        update: markConnectionChecking,
+      }),
+    ),
+    Match.when({ _tag: "SiteCheckStarted" }, ({ site }) =>
+      updateSiteState({
+        site,
+        state,
+        update: markConnectionChecking,
       }),
     ),
     Match.when(
-      { _tag: "CheckStarted", signal: "ping", family: "ipv6" },
-      () => ({
-        ...state,
-        ping: {
-          ...state.ping,
-          ipv6: {
-            ...state.ping.ipv6,
-            isChecking: true,
-          },
-        },
-      }),
+      { _tag: "CheckCompleted" },
+      ({ checkedAt, family, result, signal }) =>
+        updateConnectionState({
+          family,
+          signal,
+          state,
+          update: completeConnectionCheck({ checkedAt, result }),
+        }),
     ),
-    Match.when(
-      { _tag: "CheckStarted", signal: "http", family: "ipv4" },
-      () => ({
-        ...state,
-        http: {
-          ...state.http,
-          ipv4: {
-            ...state.http.ipv4,
-            isChecking: true,
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "CheckStarted", signal: "http", family: "ipv6" },
-      () => ({
-        ...state,
-        http: {
-          ...state.http,
-          ipv6: {
-            ...state.http.ipv6,
-            isChecking: true,
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "CheckStarted", signal: "direct", family: "ipv4" },
-      () => ({
-        ...state,
-        direct: {
-          ...state.direct,
-          ipv4: {
-            ...state.direct.ipv4,
-            isChecking: true,
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "CheckStarted", signal: "direct", family: "ipv6" },
-      () => ({
-        ...state,
-        direct: {
-          ...state.direct,
-          ipv6: {
-            ...state.direct.ipv6,
-            isChecking: true,
-          },
-        },
-      }),
-    ),
-    Match.when({ _tag: "SiteCheckStarted", site: "plaintextsports" }, () => ({
-      ...state,
-      sites: {
-        ...state.sites,
-        plaintextsports: {
-          ...state.sites.plaintextsports,
-          isChecking: true,
-        },
-      },
-    })),
-    Match.when({ _tag: "SiteCheckStarted", site: "slack" }, () => ({
-      ...state,
-      sites: {
-        ...state.sites,
-        slack: {
-          ...state.sites.slack,
-          isChecking: true,
-        },
-      },
-    })),
-    Match.when(
-      { _tag: "CheckCompleted", signal: "ping", family: "ipv4" },
-      ({ checkedAt, result }) => ({
-        ...state,
-        ping: {
-          ...state.ping,
-          ipv4: {
-            ...state.ping.ipv4,
-            status: result.status,
-            isChecking: false,
-            detail: result.detail,
-            lastCheckedAt: checkedAt,
-            successfulChecks:
-              state.ping.ipv4.successfulChecks +
-              (result.status === "online" ? 1 : 0),
-            totalChecks: state.ping.ipv4.totalChecks + 1,
-            latencyHistoryMs:
-              result.latencyMs === null
-                ? state.ping.ipv4.latencyHistoryMs
-                : [...state.ping.ipv4.latencyHistoryMs, result.latencyMs].slice(
-                    -latencyHistoryLimit,
-                  ),
-            outageStartedAt:
-              result.status === "offline"
-                ? (state.ping.ipv4.outageStartedAt ?? checkedAt)
-                : null,
-            outages:
-              result.status === "online" &&
-              state.ping.ipv4.status === "offline" &&
-              state.ping.ipv4.outageStartedAt !== null
-                ? [
-                    ...state.ping.ipv4.outages,
-                    {
-                      startedAt: state.ping.ipv4.outageStartedAt,
-                      endedAt: checkedAt,
-                      durationMs: checkedAt - state.ping.ipv4.outageStartedAt,
-                    },
-                  ].slice(-outageHistoryLimit)
-                : state.ping.ipv4.outages,
-            recentChecks: [
-              ...state.ping.ipv4.recentChecks.filter(
-                ({ checkedAt: sampleCheckedAt }) =>
-                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-              ),
-              {
-                checkedAt,
-                isSuccess: result.status === "online",
-              },
-            ],
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "CheckCompleted", signal: "ping", family: "ipv6" },
-      ({ checkedAt, result }) => ({
-        ...state,
-        ping: {
-          ...state.ping,
-          ipv6: {
-            ...state.ping.ipv6,
-            status: result.status,
-            isChecking: false,
-            detail: result.detail,
-            lastCheckedAt: checkedAt,
-            successfulChecks:
-              state.ping.ipv6.successfulChecks +
-              (result.status === "online" ? 1 : 0),
-            totalChecks: state.ping.ipv6.totalChecks + 1,
-            latencyHistoryMs:
-              result.latencyMs === null
-                ? state.ping.ipv6.latencyHistoryMs
-                : [...state.ping.ipv6.latencyHistoryMs, result.latencyMs].slice(
-                    -latencyHistoryLimit,
-                  ),
-            outageStartedAt:
-              result.status === "offline"
-                ? (state.ping.ipv6.outageStartedAt ?? checkedAt)
-                : null,
-            outages:
-              result.status === "online" &&
-              state.ping.ipv6.status === "offline" &&
-              state.ping.ipv6.outageStartedAt !== null
-                ? [
-                    ...state.ping.ipv6.outages,
-                    {
-                      startedAt: state.ping.ipv6.outageStartedAt,
-                      endedAt: checkedAt,
-                      durationMs: checkedAt - state.ping.ipv6.outageStartedAt,
-                    },
-                  ].slice(-outageHistoryLimit)
-                : state.ping.ipv6.outages,
-            recentChecks: [
-              ...state.ping.ipv6.recentChecks.filter(
-                ({ checkedAt: sampleCheckedAt }) =>
-                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-              ),
-              {
-                checkedAt,
-                isSuccess: result.status === "online",
-              },
-            ],
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "CheckCompleted", signal: "http", family: "ipv4" },
-      ({ checkedAt, result }) => ({
-        ...state,
-        http: {
-          ...state.http,
-          ipv4: {
-            ...state.http.ipv4,
-            status: result.status,
-            isChecking: false,
-            detail: result.detail,
-            lastCheckedAt: checkedAt,
-            successfulChecks:
-              state.http.ipv4.successfulChecks +
-              (result.status === "online" ? 1 : 0),
-            totalChecks: state.http.ipv4.totalChecks + 1,
-            latencyHistoryMs:
-              result.latencyMs === null
-                ? state.http.ipv4.latencyHistoryMs
-                : [...state.http.ipv4.latencyHistoryMs, result.latencyMs].slice(
-                    -latencyHistoryLimit,
-                  ),
-            outageStartedAt:
-              result.status === "offline"
-                ? (state.http.ipv4.outageStartedAt ?? checkedAt)
-                : null,
-            outages:
-              result.status === "online" &&
-              state.http.ipv4.status === "offline" &&
-              state.http.ipv4.outageStartedAt !== null
-                ? [
-                    ...state.http.ipv4.outages,
-                    {
-                      startedAt: state.http.ipv4.outageStartedAt,
-                      endedAt: checkedAt,
-                      durationMs: checkedAt - state.http.ipv4.outageStartedAt,
-                    },
-                  ].slice(-outageHistoryLimit)
-                : state.http.ipv4.outages,
-            recentChecks: [
-              ...state.http.ipv4.recentChecks.filter(
-                ({ checkedAt: sampleCheckedAt }) =>
-                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-              ),
-              {
-                checkedAt,
-                isSuccess: result.status === "online",
-              },
-            ],
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "CheckCompleted", signal: "http", family: "ipv6" },
-      ({ checkedAt, result }) => ({
-        ...state,
-        http: {
-          ...state.http,
-          ipv6: {
-            ...state.http.ipv6,
-            status: result.status,
-            isChecking: false,
-            detail: result.detail,
-            lastCheckedAt: checkedAt,
-            successfulChecks:
-              state.http.ipv6.successfulChecks +
-              (result.status === "online" ? 1 : 0),
-            totalChecks: state.http.ipv6.totalChecks + 1,
-            latencyHistoryMs:
-              result.latencyMs === null
-                ? state.http.ipv6.latencyHistoryMs
-                : [...state.http.ipv6.latencyHistoryMs, result.latencyMs].slice(
-                    -latencyHistoryLimit,
-                  ),
-            outageStartedAt:
-              result.status === "offline"
-                ? (state.http.ipv6.outageStartedAt ?? checkedAt)
-                : null,
-            outages:
-              result.status === "online" &&
-              state.http.ipv6.status === "offline" &&
-              state.http.ipv6.outageStartedAt !== null
-                ? [
-                    ...state.http.ipv6.outages,
-                    {
-                      startedAt: state.http.ipv6.outageStartedAt,
-                      endedAt: checkedAt,
-                      durationMs: checkedAt - state.http.ipv6.outageStartedAt,
-                    },
-                  ].slice(-outageHistoryLimit)
-                : state.http.ipv6.outages,
-            recentChecks: [
-              ...state.http.ipv6.recentChecks.filter(
-                ({ checkedAt: sampleCheckedAt }) =>
-                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-              ),
-              {
-                checkedAt,
-                isSuccess: result.status === "online",
-              },
-            ],
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "CheckCompleted", signal: "direct", family: "ipv4" },
-      ({ checkedAt, result }) => ({
-        ...state,
-        direct: {
-          ...state.direct,
-          ipv4: {
-            ...state.direct.ipv4,
-            status: result.status,
-            isChecking: false,
-            detail: result.detail,
-            lastCheckedAt: checkedAt,
-            successfulChecks:
-              state.direct.ipv4.successfulChecks +
-              (result.status === "online" ? 1 : 0),
-            totalChecks: state.direct.ipv4.totalChecks + 1,
-            latencyHistoryMs:
-              result.latencyMs === null
-                ? state.direct.ipv4.latencyHistoryMs
-                : [
-                    ...state.direct.ipv4.latencyHistoryMs,
-                    result.latencyMs,
-                  ].slice(-latencyHistoryLimit),
-            outageStartedAt:
-              result.status === "offline"
-                ? (state.direct.ipv4.outageStartedAt ?? checkedAt)
-                : null,
-            outages:
-              result.status === "online" &&
-              state.direct.ipv4.status === "offline" &&
-              state.direct.ipv4.outageStartedAt !== null
-                ? [
-                    ...state.direct.ipv4.outages,
-                    {
-                      startedAt: state.direct.ipv4.outageStartedAt,
-                      endedAt: checkedAt,
-                      durationMs: checkedAt - state.direct.ipv4.outageStartedAt,
-                    },
-                  ].slice(-outageHistoryLimit)
-                : state.direct.ipv4.outages,
-            recentChecks: [
-              ...state.direct.ipv4.recentChecks.filter(
-                ({ checkedAt: sampleCheckedAt }) =>
-                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-              ),
-              {
-                checkedAt,
-                isSuccess: result.status === "online",
-              },
-            ],
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "CheckCompleted", signal: "direct", family: "ipv6" },
-      ({ checkedAt, result }) => ({
-        ...state,
-        direct: {
-          ...state.direct,
-          ipv6: {
-            ...state.direct.ipv6,
-            status: result.status,
-            isChecking: false,
-            detail: result.detail,
-            lastCheckedAt: checkedAt,
-            successfulChecks:
-              state.direct.ipv6.successfulChecks +
-              (result.status === "online" ? 1 : 0),
-            totalChecks: state.direct.ipv6.totalChecks + 1,
-            latencyHistoryMs:
-              result.latencyMs === null
-                ? state.direct.ipv6.latencyHistoryMs
-                : [
-                    ...state.direct.ipv6.latencyHistoryMs,
-                    result.latencyMs,
-                  ].slice(-latencyHistoryLimit),
-            outageStartedAt:
-              result.status === "offline"
-                ? (state.direct.ipv6.outageStartedAt ?? checkedAt)
-                : null,
-            outages:
-              result.status === "online" &&
-              state.direct.ipv6.status === "offline" &&
-              state.direct.ipv6.outageStartedAt !== null
-                ? [
-                    ...state.direct.ipv6.outages,
-                    {
-                      startedAt: state.direct.ipv6.outageStartedAt,
-                      endedAt: checkedAt,
-                      durationMs: checkedAt - state.direct.ipv6.outageStartedAt,
-                    },
-                  ].slice(-outageHistoryLimit)
-                : state.direct.ipv6.outages,
-            recentChecks: [
-              ...state.direct.ipv6.recentChecks.filter(
-                ({ checkedAt: sampleCheckedAt }) =>
-                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-              ),
-              {
-                checkedAt,
-                isSuccess: result.status === "online",
-              },
-            ],
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "SiteCheckCompleted", site: "plaintextsports" },
-      ({ checkedAt, result }) => ({
-        ...state,
-        sites: {
-          ...state.sites,
-          plaintextsports: {
-            ...state.sites.plaintextsports,
-            status: result.status,
-            isChecking: false,
-            detail: result.detail,
-            lastCheckedAt: checkedAt,
-            successfulChecks:
-              state.sites.plaintextsports.successfulChecks +
-              (result.status === "online" ? 1 : 0),
-            totalChecks: state.sites.plaintextsports.totalChecks + 1,
-            latencyHistoryMs:
-              result.latencyMs === null
-                ? state.sites.plaintextsports.latencyHistoryMs
-                : [
-                    ...state.sites.plaintextsports.latencyHistoryMs,
-                    result.latencyMs,
-                  ].slice(-latencyHistoryLimit),
-            outageStartedAt:
-              result.status === "offline"
-                ? (state.sites.plaintextsports.outageStartedAt ?? checkedAt)
-                : null,
-            outages:
-              result.status === "online" &&
-              state.sites.plaintextsports.status === "offline" &&
-              state.sites.plaintextsports.outageStartedAt !== null
-                ? [
-                    ...state.sites.plaintextsports.outages,
-                    {
-                      startedAt: state.sites.plaintextsports.outageStartedAt,
-                      endedAt: checkedAt,
-                      durationMs:
-                        checkedAt - state.sites.plaintextsports.outageStartedAt,
-                    },
-                  ].slice(-outageHistoryLimit)
-                : state.sites.plaintextsports.outages,
-            recentChecks: [
-              ...state.sites.plaintextsports.recentChecks.filter(
-                ({ checkedAt: sampleCheckedAt }) =>
-                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-              ),
-              {
-                checkedAt,
-                isSuccess: result.status === "online",
-              },
-            ],
-          },
-        },
-      }),
-    ),
-    Match.when(
-      { _tag: "SiteCheckCompleted", site: "slack" },
-      ({ checkedAt, result }) => ({
-        ...state,
-        sites: {
-          ...state.sites,
-          slack: {
-            ...state.sites.slack,
-            status: result.status,
-            isChecking: false,
-            detail: result.detail,
-            lastCheckedAt: checkedAt,
-            successfulChecks:
-              state.sites.slack.successfulChecks +
-              (result.status === "online" ? 1 : 0),
-            totalChecks: state.sites.slack.totalChecks + 1,
-            latencyHistoryMs:
-              result.latencyMs === null
-                ? state.sites.slack.latencyHistoryMs
-                : [
-                    ...state.sites.slack.latencyHistoryMs,
-                    result.latencyMs,
-                  ].slice(-latencyHistoryLimit),
-            outageStartedAt:
-              result.status === "offline"
-                ? (state.sites.slack.outageStartedAt ?? checkedAt)
-                : null,
-            outages:
-              result.status === "online" &&
-              state.sites.slack.status === "offline" &&
-              state.sites.slack.outageStartedAt !== null
-                ? [
-                    ...state.sites.slack.outages,
-                    {
-                      startedAt: state.sites.slack.outageStartedAt,
-                      endedAt: checkedAt,
-                      durationMs: checkedAt - state.sites.slack.outageStartedAt,
-                    },
-                  ].slice(-outageHistoryLimit)
-                : state.sites.slack.outages,
-            recentChecks: [
-              ...state.sites.slack.recentChecks.filter(
-                ({ checkedAt: sampleCheckedAt }) =>
-                  sampleCheckedAt >= checkedAt - rollingWindowLimitMs,
-              ),
-              {
-                checkedAt,
-                isSuccess: result.status === "online",
-              },
-            ],
-          },
-        },
+    Match.when({ _tag: "SiteCheckCompleted" }, ({ checkedAt, result, site }) =>
+      updateSiteState({
+        site,
+        state,
+        update: completeConnectionCheck({ checkedAt, result }),
       }),
     ),
     Match.exhaustive,
