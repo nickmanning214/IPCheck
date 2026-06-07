@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 
 export const CheckResultSchema = Schema.Struct({
-  status: Schema.Literal("online", "offline"),
+  status: Schema.Literals(["online", "offline"]),
   detail: Schema.String,
   latencyMs: Schema.NullOr(Schema.Number),
 });

@@ -1,5 +1,5 @@
 import type { Effect as Fx } from "effect";
-import { Context, Effect, Layer, pipe } from "effect";
+import { Context, Effect, Layer, Match, pipe } from "effect";
 
 import type { CheckResult } from "../../domain/CheckResult";
 import type { Family } from "../../domain/Family";
@@ -11,7 +11,7 @@ import { readConnectionStatus } from "./readConnectionStatus";
 import { readCurlSiteResult } from "./readCurlSiteResult";
 import { readProbeTargets } from "./readProbeTargets";
 
-export class ConnectivityService extends Context.Tag("ConnectivityService")<
+export class ConnectivityService extends Context.Service<
   ConnectivityService,
   {
     readonly targets: ProbeTargets;
@@ -23,7 +23,7 @@ export class ConnectivityService extends Context.Tag("ConnectivityService")<
       readonly site: SiteKey;
     }) => Fx.Effect<CheckResult>;
   }
->() {
+>()("ConnectivityService") {
   static Live = Layer.effect(
     ConnectivityService,
     pipe(
@@ -64,20 +64,22 @@ export class ConnectivityService extends Context.Tag("ConnectivityService")<
               ],
             }),
             Effect.flatMap(({ exitCode, stdout, stderr }) =>
-              Effect.if(exitCode === 0, {
-                onTrue: () => Effect.succeed(readCurlSiteResult({ stdout })),
-                onFalse: () =>
-                  Effect.succeed({
+              Effect.succeed(
+                pipe(
+                  Match.value(exitCode),
+                  Match.when(0, () => readCurlSiteResult({ stdout })),
+                  Match.orElse(() => ({
                     status: "offline" as const,
                     detail:
                       stderr.trim().length > 0
                         ? stderr.trim()
                         : "Site probe failed",
                     latencyMs: null,
-                  }),
-              }),
+                  })),
+                ),
+              ),
             ),
-            Effect.catchAll(() =>
+            Effect.catchCause(() =>
               Effect.succeed({
                 status: "offline" as const,
                 detail: "Unable to execute the site check",

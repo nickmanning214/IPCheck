@@ -3,9 +3,6 @@ import { Duration, Effect, pipe } from "effect";
 import type { AppAction } from "../domain/AppAction";
 import { ConnectivityService } from "../services/connectivity/ConnectivityService";
 
-const { readConnectionStatus, readSiteStatus } =
-  Effect.serviceFunctions(ConnectivityService);
-
 export const runMonitorLoop = ({
   dispatch,
   intervalMs = 1000,
@@ -14,49 +11,52 @@ export const runMonitorLoop = ({
   readonly intervalMs?: number;
 }) =>
   pipe(
-    Effect.all(
-      [
-        ...[
-          { signal: "ping" as const, family: "ipv4" as const },
-          { signal: "ping" as const, family: "ipv6" as const },
-          { signal: "http" as const, family: "ipv4" as const },
-          { signal: "http" as const, family: "ipv6" as const },
-          { signal: "direct" as const, family: "ipv4" as const },
-          { signal: "direct" as const, family: "ipv6" as const },
-        ].map(({ family, signal }) =>
-          pipe(
-            dispatch({ _tag: "CheckStarted", signal, family }),
-            Effect.zipRight(readConnectionStatus({ signal, family })),
-            Effect.flatMap((result) =>
-              dispatch({
-                _tag: "CheckCompleted",
-                signal,
-                family,
-                checkedAt: Date.now(),
-                result,
-              }),
+    ConnectivityService,
+    Effect.flatMap(({ readConnectionStatus, readSiteStatus }) =>
+      Effect.all(
+        [
+          ...[
+            { signal: "ping" as const, family: "ipv4" as const },
+            { signal: "ping" as const, family: "ipv6" as const },
+            { signal: "http" as const, family: "ipv4" as const },
+            { signal: "http" as const, family: "ipv6" as const },
+            { signal: "direct" as const, family: "ipv4" as const },
+            { signal: "direct" as const, family: "ipv6" as const },
+          ].map(({ family, signal }) =>
+            pipe(
+              dispatch({ _tag: "CheckStarted", signal, family }),
+              Effect.andThen(readConnectionStatus({ signal, family })),
+              Effect.flatMap((result) =>
+                dispatch({
+                  _tag: "CheckCompleted",
+                  signal,
+                  family,
+                  checkedAt: Date.now(),
+                  result,
+                }),
+              ),
+              Effect.andThen(Effect.sleep(Duration.millis(intervalMs))),
+              Effect.forever,
             ),
-            Effect.zipRight(Effect.sleep(Duration.millis(intervalMs))),
-            Effect.forever,
           ),
-        ),
-        ...["plaintextsports" as const, "slack" as const].map((site) =>
-          pipe(
-            dispatch({ _tag: "SiteCheckStarted", site }),
-            Effect.zipRight(readSiteStatus({ site })),
-            Effect.flatMap((result) =>
-              dispatch({
-                _tag: "SiteCheckCompleted",
-                site,
-                checkedAt: Date.now(),
-                result,
-              }),
+          ...["plaintextsports" as const, "slack" as const].map((site) =>
+            pipe(
+              dispatch({ _tag: "SiteCheckStarted", site }),
+              Effect.andThen(readSiteStatus({ site })),
+              Effect.flatMap((result) =>
+                dispatch({
+                  _tag: "SiteCheckCompleted",
+                  site,
+                  checkedAt: Date.now(),
+                  result,
+                }),
+              ),
+              Effect.andThen(Effect.sleep(Duration.millis(intervalMs))),
+              Effect.forever,
             ),
-            Effect.zipRight(Effect.sleep(Duration.millis(intervalMs))),
-            Effect.forever,
           ),
-        ),
-      ],
-      { concurrency: "unbounded" },
+        ],
+        { concurrency: "unbounded" },
+      ),
     ),
   );

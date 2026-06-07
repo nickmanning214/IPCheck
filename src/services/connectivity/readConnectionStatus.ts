@@ -9,8 +9,6 @@ import { pickSuccessDetail } from "./pickSuccessDetail";
 import { readCurlProbeResult } from "./readCurlProbeResult";
 import { readLatencyMs } from "./readLatencyMs";
 
-const { run } = Effect.serviceFunctions(ProcessService);
-
 export const readConnectionStatus = ({
   family,
   signal,
@@ -24,166 +22,184 @@ export const readConnectionStatus = ({
     Match.value(signal),
     Match.when("ping", () =>
       pipe(
-        Match.value(family),
-        Match.when("ipv4", () =>
-          run({
-            command: "ping",
-            args: ["-c", "1", "-W", "1000", target],
-          }),
+        ProcessService,
+        Effect.flatMap(({ run }) =>
+          pipe(
+            Match.value(family),
+            Match.when("ipv4", () =>
+              run({
+                command: "ping",
+                args: ["-c", "1", "-W", "1000", target],
+              }),
+            ),
+            Match.when("ipv6", () =>
+              run({
+                command: "ping6",
+                args: ["-c", "1", target],
+              }),
+            ),
+            Match.exhaustive,
+          ),
         ),
-        Match.when("ipv6", () =>
-          run({
-            command: "ping6",
-            args: ["-c", "1", target],
-          }),
-        ),
-        Match.exhaustive,
         Effect.flatMap(({ exitCode, stdout, stderr }) =>
-          Effect.if(exitCode === 0, {
-            onTrue: () =>
-              Effect.succeed<CheckResult>({
-                status: "online",
+          Effect.succeed(
+            pipe(
+              Match.value(exitCode),
+              Match.when(0, () => ({
+                status: "online" as const,
                 detail: pickSuccessDetail({ stdout }),
                 latencyMs: readLatencyMs({ stdout }),
-              }),
-            onFalse: () =>
-              Effect.succeed<CheckResult>({
-                status: "offline",
+              })),
+              Match.orElse(() => ({
+                status: "offline" as const,
                 detail: pickFailureDetail({ stderr, stdout }),
                 latencyMs: null,
-              }),
-          }),
+              })),
+            ),
+          ),
         ),
       ),
     ),
     Match.when("http", () =>
       pipe(
-        Match.value(family),
-        Match.when("ipv4", () =>
-          run({
-            command: "curl",
-            args: [
-              "-4",
-              "--noproxy",
-              "*",
-              "--silent",
-              "--show-error",
-              "--connect-timeout",
-              "2",
-              "--max-time",
-              "5",
-              "--write-out",
-              "\n%{http_code} %{time_total} %{remote_ip}",
-              target,
-            ],
-          }),
+        ProcessService,
+        Effect.flatMap(({ run }) =>
+          pipe(
+            Match.value(family),
+            Match.when("ipv4", () =>
+              run({
+                command: "curl",
+                args: [
+                  "-4",
+                  "--noproxy",
+                  "*",
+                  "--silent",
+                  "--show-error",
+                  "--connect-timeout",
+                  "2",
+                  "--max-time",
+                  "5",
+                  "--write-out",
+                  "\n%{http_code} %{time_total} %{remote_ip}",
+                  target,
+                ],
+              }),
+            ),
+            Match.when("ipv6", () =>
+              run({
+                command: "curl",
+                args: [
+                  "-6",
+                  "--noproxy",
+                  "*",
+                  "--silent",
+                  "--show-error",
+                  "--connect-timeout",
+                  "2",
+                  "--max-time",
+                  "5",
+                  "--write-out",
+                  "\n%{http_code} %{time_total} %{remote_ip}",
+                  target,
+                ],
+              }),
+            ),
+            Match.exhaustive,
+          ),
         ),
-        Match.when("ipv6", () =>
-          run({
-            command: "curl",
-            args: [
-              "-6",
-              "--noproxy",
-              "*",
-              "--silent",
-              "--show-error",
-              "--connect-timeout",
-              "2",
-              "--max-time",
-              "5",
-              "--write-out",
-              "\n%{http_code} %{time_total} %{remote_ip}",
-              target,
-            ],
-          }),
-        ),
-        Match.exhaustive,
         Effect.flatMap(({ exitCode, stdout, stderr }) =>
-          Effect.if(exitCode === 0, {
-            onTrue: () =>
-              Effect.succeed(
+          Effect.succeed(
+            pipe(
+              Match.value(exitCode),
+              Match.when(0, () =>
                 readCurlProbeResult({
                   family,
                   successPrefix: "Address",
                   stdout,
                 }),
               ),
-            onFalse: () =>
-              Effect.succeed<CheckResult>({
-                status: "offline",
+              Match.orElse(() => ({
+                status: "offline" as const,
                 detail: pickFailureDetail({ stderr, stdout }),
                 latencyMs: null,
-              }),
-          }),
+              })),
+            ),
+          ),
         ),
       ),
     ),
     Match.when("direct", () =>
       pipe(
-        Match.value(family),
-        Match.when("ipv4", () =>
-          run({
-            command: "curl",
-            args: [
-              "-4",
-              "--noproxy",
-              "*",
-              "--silent",
-              "--show-error",
-              "--insecure",
-              "--connect-timeout",
-              "2",
-              "--max-time",
-              "5",
-              "--write-out",
-              "\n%{http_code} %{time_total} %{remote_ip}",
-              target,
-            ],
-          }),
+        ProcessService,
+        Effect.flatMap(({ run }) =>
+          pipe(
+            Match.value(family),
+            Match.when("ipv4", () =>
+              run({
+                command: "curl",
+                args: [
+                  "-4",
+                  "--noproxy",
+                  "*",
+                  "--silent",
+                  "--show-error",
+                  "--insecure",
+                  "--connect-timeout",
+                  "2",
+                  "--max-time",
+                  "5",
+                  "--write-out",
+                  "\n%{http_code} %{time_total} %{remote_ip}",
+                  target,
+                ],
+              }),
+            ),
+            Match.when("ipv6", () =>
+              run({
+                command: "curl",
+                args: [
+                  "-6",
+                  "--noproxy",
+                  "*",
+                  "--silent",
+                  "--show-error",
+                  "--insecure",
+                  "--connect-timeout",
+                  "2",
+                  "--max-time",
+                  "5",
+                  "--write-out",
+                  "\n%{http_code} %{time_total} %{remote_ip}",
+                  target,
+                ],
+              }),
+            ),
+            Match.exhaustive,
+          ),
         ),
-        Match.when("ipv6", () =>
-          run({
-            command: "curl",
-            args: [
-              "-6",
-              "--noproxy",
-              "*",
-              "--silent",
-              "--show-error",
-              "--insecure",
-              "--connect-timeout",
-              "2",
-              "--max-time",
-              "5",
-              "--write-out",
-              "\n%{http_code} %{time_total} %{remote_ip}",
-              target,
-            ],
-          }),
-        ),
-        Match.exhaustive,
         Effect.flatMap(({ exitCode, stdout, stderr }) =>
-          Effect.if(exitCode === 0, {
-            onTrue: () =>
-              Effect.succeed(
+          Effect.succeed(
+            pipe(
+              Match.value(exitCode),
+              Match.when(0, () =>
                 readCurlProbeResult({
                   family,
                   successPrefix: "Response",
                   stdout,
                 }),
               ),
-            onFalse: () =>
-              Effect.succeed<CheckResult>({
-                status: "offline",
+              Match.orElse(() => ({
+                status: "offline" as const,
                 detail: pickFailureDetail({ stderr, stdout }),
                 latencyMs: null,
-              }),
-          }),
+              })),
+            ),
+          ),
         ),
       ),
     ),
     Match.exhaustive,
-    Effect.catchAll(() =>
+    Effect.catchCause(() =>
       Effect.succeed<CheckResult>({
         status: "offline",
         detail: "Unable to execute the connectivity check",

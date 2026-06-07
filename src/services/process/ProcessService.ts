@@ -5,7 +5,7 @@ import { ProcessError } from "./ProcessError";
 import type { ProcessResult } from "./ProcessResultSchema";
 import { runProcess } from "./runProcess";
 
-export class ProcessService extends Context.Tag("ProcessService")<
+export class ProcessService extends Context.Service<
   ProcessService,
   {
     readonly run: (input: {
@@ -13,6 +13,6 @@ export class ProcessService extends Context.Tag("ProcessService")<
       readonly args: ReadonlyArray<string>;
     }) => Fx.Effect<ProcessResult, ProcessError>;
   }
->() {
+>()("ProcessService") {
   static Live = Layer.succeed(ProcessService, { run: runProcess });
 }

@@ -9,7 +9,7 @@ This project is a terminal app.
 - Runtime: Bun
 - Language: TypeScript
 - UI: React with Ink
-- Effects and services: Effect
+- Effects and services: Effect 4 beta
 
 ## Features
 
