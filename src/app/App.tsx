@@ -14,7 +14,7 @@ import { SitesSummaryRow } from "../ui/SitesSummaryRow";
 import { appReducer } from "./appReducer";
 import { makeInitialAppState } from "./initialAppState";
 import { runMonitorLoop } from "./runMonitorLoop";
-import { useEffectReducer } from "./useEffectReducer";
+import { useEffectReducer } from "@nicholas/effect-react";
 
 export const App = ({
   intervalMs = 1000,

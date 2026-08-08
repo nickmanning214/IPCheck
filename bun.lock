@@ -4,6 +4,7 @@
   "workspaces": {
     "": {
       "dependencies": {
+        "@nicholas/effect-react": "git+ssh://git@github.com/nickmanning214/Effect-React.git#9840b65e2515a87ad59ce6362e2b543c4a9e0355",
         "effect": "^4.0.0-beta.78",
         "ink": "^6.8.0",
         "react": "^19.2.4",
@@ -33,6 +34,8 @@
     "@msgpackr-extract/msgpackr-extract-linux-x64": ["@msgpackr-extract/msgpackr-extract-linux-x64@3.0.4", "", { "os": "linux", "cpu": "x64" }, "sha512-8TNXMEjJc3QEy7R/x1INhgiU+XakDAFUzBhaz7+Rbrs8NH5UQeHQxxmzsSBJGyV6I1jW79undiQm8tOI+D+8FQ=="],
 
     "@msgpackr-extract/msgpackr-extract-win32-x64": ["@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4", "", { "os": "win32", "cpu": "x64" }, "sha512-CmCXPQrkbwExx3j946/PtHWHbYJiCRBRDl4BlkRQcJB/YOwQxJRTpoo7aTsortjgoJ1x7opzTSxn7C+ASSLVjQ=="],
+
+    "@nicholas/effect-react": ["@nicholas/effect-react@git+ssh://git@github.com/nickmanning214/Effect-React.git#9840b65e2515a87ad59ce6362e2b543c4a9e0355", { "peerDependencies": { "effect": ">=3.17.0 <4 || >=4.0.0-beta.0 <5", "react": ">=19 <20" } }, "9840b65e2515a87ad59ce6362e2b543c4a9e0355"],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 

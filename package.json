@@ -9,6 +9,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@nicholas/effect-react": "git+ssh://git@github.com/nickmanning214/Effect-React.git#9840b65e2515a87ad59ce6362e2b543c4a9e0355",
     "effect": "^4.0.0-beta.78",
     "ink": "^6.8.0",
     "react": "^19.2.4",
